@@ -21,6 +21,9 @@ class Product(models.Model):
     description = models.TextField(blank=True)
     stock_available = models.PositiveIntegerField()
     units_sold = models.PositiveIntegerField(default=0)
+    demand_forecast = models.IntegerField(default=0)
+    optimized_price = models.FloatField(default=0.0)
+
 
     def __str__(self):
         return self.name
