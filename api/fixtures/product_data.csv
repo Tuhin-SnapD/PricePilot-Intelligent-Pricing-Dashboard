@@ -1,0 +1,11 @@
+product_id,name,description,cost_price,selling_price,category,stock_available,units_sold,customer_rating,demand_forecast,optimized_price
+1,Eco-Friendly Water Bottle,"A sustainable, reusable water bottle made from recycled materials.",5.0,12.99,Outdoor & Sports,500,200,4,250,11.5
+2,Wireless Earbuds,Bluetooth 5.0 wireless earbuds with noise cancellation and long battery life.,25.0,59.99,Electronics,300,150,5,180,55.0
+3,Organic Cotton T-Shirt,"Soft, breathable t-shirt made from 100% organic cotton.",8.0,19.99,Apparel,400,100,4,120,18.5
+4,Smart Home Hub,Control all your smart home devices with this central hub.,40.0,99.99,Home Automation,150,75,4,90,95.0
+5,Electric Scooter,Lightweight electric scooter with a range of 20 miles.,150.0,299.99,Transportation,80,40,5,50,285.0
+6,Noise-Canceling Headphones,Over-ear headphones with active noise cancellation.,50.0,129.99,Electronics,200,90,4,110,125.0
+7,Smartwatch,Feature-packed smartwatch with heart rate monitor and GPS.,70.0,149.99,Wearables,250,130,5,160,145.0
+8,Portable Solar Charger,Compact solar charger for outdoor use.,20.0,39.99,Outdoor & Sports,300,140,4,170,38.0
+9,Fitness Tracker,Wearable fitness tracker with sleep monitoring.,30.0,59.99,Wearables,350,180,4,200,57.0
+10,Bluetooth Speaker,Portable Bluetooth speaker with excellent sound quality.,15.0,45.99,Electronics,400,210,4,240,43.0
