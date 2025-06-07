@@ -1,27 +1,41 @@
 import numpy as np
 from decimal import Decimal
 
-def optimize_price(cost_price, demand_elasticity=-1.5, max_price_factor=1.5):
+
+def optimize_price(
+    cost_price,
+    current_price=None,
+    demand_elasticity=-1.5,
+    max_price_factor=1.5,
+    base_demand=100.0,
+    steps=100
+):
     """
-    Simple illustrative pricing optimization:
-    - demand_elasticity: elasticity coefficient (e.g., -1.5)
-    - max_price_factor: maximum factor above cost_price to consider
-    Use revenue maximization: revenue = price * demand
-    Assume base demand at current price is proportional to 1.
+    Find the price that maximizes profit = (price - cost_price) * demand,
+    where demand = base_demand * (price / current_price)^demand_elasticity.
+
+    Returns:
+      best_price (float): revenue‐maximizing price, rounded to 2 d.p.
+      best_profit (float): profit at that price, rounded to 2 d.p.
     """
-    # Convert Decimal to float for NumPy compatibility
     cost_price = float(cost_price)
-    base_price = cost_price * 1.2
-    base_demand = 100
+    # reference price for base_demand
+    if current_price is None:
+        current_price = cost_price * 1.2
+    else:
+        current_price = float(current_price)
 
-    prices = np.linspace(cost_price, cost_price * max_price_factor, 50)
-    best_price, best_revenue = cost_price, 0
+    # candidate price grid
+    prices = np.linspace(cost_price, cost_price * max_price_factor, steps)
 
-    for p in prices:
-        demand = base_demand * (p / base_price) ** demand_elasticity
-        revenue = p * demand
-        if revenue > best_revenue:
-            best_revenue = revenue
-            best_price = p
+    # compute demand
+    demands = base_demand * (prices / current_price) ** demand_elasticity
+    # compute profit instead of revenue
+    profits = (prices - cost_price) * demands
 
-    return round(best_price, 2)
+    # pick best
+    idx = np.nanargmax(profits)   # in case some profits are negative/NaN
+    best_price  = prices[idx]
+    best_profit = profits[idx]
+
+    return round(best_price, 2), round(best_profit, 2)
