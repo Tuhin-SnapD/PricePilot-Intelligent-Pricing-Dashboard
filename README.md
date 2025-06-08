@@ -27,10 +27,10 @@ This repository contains a full-stack web application for price optimization and
 ## Getting Started
 
 ### Backend Setup
-(https://github.com/Tuhin-SnapD/Price-Optimiser-Tool/tree/main/price-optimiser-backend)[Backend]
+[Backend](https://github.com/Tuhin-SnapD/Price-Optimiser-Tool/tree/main/price-optimiser-backend)
 
 ### Frontend Setup
-(https://github.com/Tuhin-SnapD/Price-Optimiser-Tool/tree/main/price-optimiser-frontend)[Frontend]
+[Frontend](https://github.com/Tuhin-SnapD/Price-Optimiser-Tool/tree/main/price-optimiser-frontend)
 
 ## Usage
 1. Register a user or login using the superuser.
