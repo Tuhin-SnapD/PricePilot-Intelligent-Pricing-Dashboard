@@ -1,4 +1,3 @@
-````markdown
 # Price Optimisation Tool Backend
 
 A Django REST API backend for managing products, forecasting demand, and calculating optimal pricing strategies.
@@ -57,7 +56,7 @@ This backend provides endpoints to:
 ```bash
 git clone https://github.com/YourUser/price-optimiser-backend.git
 cd price-optimiser-backend
-````
+```
 
 ### Environment Setup
 
