@@ -1,10 +1,7 @@
-# your_app/views.py
-
-from decimal import Decimal
-import ast
 from rest_framework import generics
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
+import ast
 from .models import Product
 from .serializers import ProductSerializer, ProductListSerializer
 from .permissions import IsAdminOrReadOnly, IsSupplierOrAdmin
@@ -63,29 +60,23 @@ class DemandForecastView(generics.GenericAPIView):
         return Response(results)
 
 class PricingOptimizationView(generics.GenericAPIView):
-    serializer_class = ProductListSerializer
+    serializer_class   = ProductListSerializer
     permission_classes = [IsAuthenticated]
 
     def get(self, request, *args, **kwargs):
-        products = Product.objects.all()
         results = []
-        for prod in products:
-            # optimize_price returns (best_price, best_profit)
-            best_price, _ = optimize_price(
-                prod.cost_price,
-                current_price=prod.selling_price,
-                demand_elasticity=-1.5,
-                max_price_factor=1.5,
-                base_demand=100.0,
-                steps=100
-            )
-            # save only the price (as Decimal) to the model
-            prod.optimized_price = Decimal(str(best_price))
+        for prod in Product.objects.all():
+            best_price, best_profit = optimize_price(prod.cost_price)
+
+            # only assign the best_price to your DecimalField
+            prod.optimized_price = best_price
             prod.save()
 
             results.append({
-                'product_id': prod.id,
-                'name': prod.name,
-                'optimized_price': best_price,
+                'product_id':       prod.id,
+                'name':             prod.name,
+                'optimized_price':  best_price,   # Decimal
+                'optimized_profit': best_profit,  # if you want to return it
             })
+
         return Response(results)

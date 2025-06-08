@@ -1,32 +1,31 @@
-// src/components/products/ProductForm.js
-import React, { useState, useEffect } from 'react';
-import { FiX } from 'react-icons/fi';
-import api from '../../api';
+import React, { useState, useEffect } from "react";
+import { FiX } from "react-icons/fi";
+import api from "../../api";
 
 const ProductForm = ({ product, onSave, onCancel }) => {
   const isEdit = Boolean(product);
   const [formData, setFormData] = useState({
-    name: '',
-    category: '',
-    cost_price: '',
-    selling_price: '',
-    description: '',
-    stock_available: '',
-    units_sold: '',
-    customer_rating: '',
+    name: "",
+    category: "",
+    cost_price: "",
+    selling_price: "",
+    description: "",
+    stock_available: "",
+    units_sold: "",
+    customer_rating: "",
   });
 
   useEffect(() => {
     if (product) {
       setFormData({
-        name: product.name || '',
-        category: product.category || '',
-        cost_price: product.cost_price || '',
-        selling_price: product.selling_price || '',
-        description: product.description || '',
-        stock_available: product.stock_available || '',
-        units_sold: product.units_sold || '',
-        customer_rating: product.customer_rating || '',
+        name: product.name || "",
+        category: product.category || "",
+        cost_price: product.cost_price || "",
+        selling_price: product.selling_price || "",
+        description: product.description || "",
+        stock_available: product.stock_available || "",
+        units_sold: product.units_sold || "",
+        customer_rating: product.customer_rating || "",
       });
     }
   }, [product]);
@@ -42,12 +41,12 @@ const ProductForm = ({ product, onSave, onCancel }) => {
       if (isEdit) {
         await api.put(`/products/${product.id}/`, formData);
       } else {
-        await api.post('/products/', formData);
+        await api.post("/products/", formData);
       }
       onSave();
     } catch (err) {
       console.error(err);
-      alert('Error saving product');
+      alert("Error saving product");
     }
   };
 
@@ -64,12 +63,10 @@ const ProductForm = ({ product, onSave, onCancel }) => {
         >
           <FiX className="w-6 h-6" />
         </button>
-        <h3 className="text-xl font-semibold mb-6">
-          {isEdit ? 'Edit Product' : 'Add New Product'}
+        <h3 className="text-xl font-semibold mb-6 text-teal-400">
+          {isEdit ? "Edit Product" : "Add New Product"}
         </h3>
-
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          {/* Name */}
           <div>
             <label className="block text-sm font-medium mb-1">Name</label>
             <input
@@ -81,8 +78,6 @@ const ProductForm = ({ product, onSave, onCancel }) => {
               className="w-full bg-gray-800 border border-gray-700 rounded px-3 py-2 text-sm focus:outline-none"
             />
           </div>
-
-          {/* Category */}
           <div>
             <label className="block text-sm font-medium mb-1">Category</label>
             <select
@@ -101,8 +96,6 @@ const ProductForm = ({ product, onSave, onCancel }) => {
               <option value="Sustainable">Sustainable</option>
             </select>
           </div>
-
-          {/* Cost Price */}
           <div>
             <label className="block text-sm font-medium mb-1">Cost Price</label>
             <input
@@ -115,10 +108,10 @@ const ProductForm = ({ product, onSave, onCancel }) => {
               className="w-full bg-gray-800 border border-gray-700 rounded px-3 py-2 text-sm focus:outline-none"
             />
           </div>
-
-          {/* Selling Price */}
           <div>
-            <label className="block text-sm font-medium mb-1">Selling Price</label>
+            <label className="block text-sm font-medium mb-1">
+              Selling Price
+            </label>
             <input
               type="number"
               name="selling_price"
@@ -129,10 +122,10 @@ const ProductForm = ({ product, onSave, onCancel }) => {
               className="w-full bg-gray-800 border border-gray-700 rounded px-3 py-2 text-sm focus:outline-none"
             />
           </div>
-
-          {/* Description (full width) */}
           <div className="sm:col-span-2">
-            <label className="block text-sm font-medium mb-1">Description</label>
+            <label className="block text-sm font-medium mb-1">
+              Description
+            </label>
             <textarea
               name="description"
               value={formData.description}
@@ -141,10 +134,10 @@ const ProductForm = ({ product, onSave, onCancel }) => {
               className="w-full bg-gray-800 border border-gray-700 rounded px-3 py-2 text-sm focus:outline-none"
             />
           </div>
-
-          {/* Stock Available */}
           <div>
-            <label className="block text-sm font-medium mb-1">Stock Available</label>
+            <label className="block text-sm font-medium mb-1">
+              Stock Available
+            </label>
             <input
               type="number"
               name="stock_available"
@@ -154,8 +147,6 @@ const ProductForm = ({ product, onSave, onCancel }) => {
               className="w-full bg-gray-800 border border-gray-700 rounded px-3 py-2 text-sm focus:outline-none"
             />
           </div>
-
-          {/* Units Sold */}
           <div>
             <label className="block text-sm font-medium mb-1">Units Sold</label>
             <input
@@ -167,10 +158,10 @@ const ProductForm = ({ product, onSave, onCancel }) => {
               className="w-full bg-gray-800 border border-gray-700 rounded px-3 py-2 text-sm focus:outline-none"
             />
           </div>
-
-          {/* Customer Rating */}
           <div className="sm:col-span-2">
-            <label className="block text-sm font-medium mb-1">Customer Rating</label>
+            <label className="block text-sm font-medium mb-1">
+              Customer Rating
+            </label>
             <input
               type="text"
               name="customer_rating"
@@ -181,8 +172,6 @@ const ProductForm = ({ product, onSave, onCancel }) => {
             />
           </div>
         </div>
-
-        {/* Actions */}
         <div className="mt-6 flex justify-end space-x-3">
           <button
             type="button"
@@ -195,7 +184,7 @@ const ProductForm = ({ product, onSave, onCancel }) => {
             type="submit"
             className="px-4 py-2 bg-teal-400 text-black rounded text-sm hover:bg-teal-500"
           >
-            {isEdit ? 'Update' : 'Add'}
+            {isEdit ? "Update" : "Add"}
           </button>
         </div>
       </form>

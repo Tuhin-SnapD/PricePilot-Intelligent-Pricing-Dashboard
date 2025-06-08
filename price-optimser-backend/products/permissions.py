@@ -8,6 +8,6 @@ class IsAdminOrReadOnly(permissions.BasePermission):
 
 class IsSupplierOrAdmin(permissions.BasePermission):
     def has_permission(self, request, view):
-        if request.user.role in ['supplier', 'admin']:
+        if request.user.role in ['supplier', 'admin','buyer']:
             return True
         return False

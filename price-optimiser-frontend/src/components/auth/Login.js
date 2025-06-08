@@ -1,12 +1,12 @@
-import React, { useState, useContext } from 'react'; 
-import { useNavigate, Link } from 'react-router-dom';
-import { AuthContext } from '../../contexts/AuthContext';
-import { FiX } from 'react-icons/fi';
+import React, { useState, useContext } from "react";
+import { useNavigate, Link } from "react-router-dom";
+import { AuthContext } from "../../contexts/AuthContext";
+import { FiX } from "react-icons/fi";
 
 const Login = () => {
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
-  const [message, setMessage] = useState('');
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [message, setMessage] = useState("");
   const { login } = useContext(AuthContext);
   const navigate = useNavigate();
 
@@ -14,10 +14,10 @@ const Login = () => {
     e.preventDefault();
     try {
       await login(username, password);
-      setMessage('Login successful! Redirecting…');
-      setTimeout(() => navigate('/'), 1000);
+      setMessage("Login successful! Redirecting…");
+      setTimeout(() => navigate("/"), 1000);
     } catch {
-      setMessage('Invalid credentials');
+      setMessage("Invalid credentials");
     }
   };
 
@@ -41,7 +41,7 @@ const Login = () => {
             <label className="block text-gray-300 mb-1">Username</label>
             <input
               value={username}
-              onChange={e => setUsername(e.target.value)}
+              onChange={(e) => setUsername(e.target.value)}
               required
               className="w-full bg-gray-800 text-white placeholder-gray-500 border border-gray-700 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-teal-400"
               placeholder="Enter your username"
@@ -53,7 +53,7 @@ const Login = () => {
             <input
               type="password"
               value={password}
-              onChange={e => setPassword(e.target.value)}
+              onChange={(e) => setPassword(e.target.value)}
               required
               className="w-full bg-gray-800 text-white placeholder-gray-500 border border-gray-700 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-teal-400"
               placeholder="Enter your password"
@@ -68,13 +68,11 @@ const Login = () => {
           </button>
 
           {message && (
-            <p className="text-sm text-center text-blue-400 mt-2">
-              {message}
-            </p>
+            <p className="text-sm text-center text-blue-400 mt-2">{message}</p>
           )}
 
           <p className="text-center text-gray-400 text-sm mt-4">
-            New user?{' '}
+            New user?{" "}
             <Link to="/register" className="text-teal-400 hover:underline">
               Sign up
             </Link>

@@ -1,22 +1,19 @@
-// src/components/products/SearchFilter.js
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from "react";
 
 const SearchFilter = ({ onSearch }) => {
-  const [name, setName] = useState('');
-  const [category, setCategory] = useState('');
+  const [name, setName] = useState("");
+  const [category, setCategory] = useState("");
 
-  // Trigger filter whenever name, category, or onSearch changes
   useEffect(() => {
     onSearch({ name, category });
   }, [name, category, onSearch]);
 
   const handleKeyDown = (e) => {
-    if (e.key === 'Enter') {
+    if (e.key === "Enter") {
       e.preventDefault();
       onSearch({ name, category });
     }
   };
-
   return (
     <div className="flex gap-4 items-center">
       <input

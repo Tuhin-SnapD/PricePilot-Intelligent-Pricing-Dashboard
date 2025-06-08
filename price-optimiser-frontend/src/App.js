@@ -2,108 +2,84 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
 import PrivateRoute from './components/common/PrivateRoute';
-
 import Login from './components/auth/Login';
 import Register from './components/auth/Register';
 import ProductList from './components/products/ProductList';
 import DemandForecast from './components/forecasts/DemandForecast';
 import PricingOptimization from './components/optimization/PricingOptimization';
-import './styles/index.css';
 import './App.css';
 
 function Home() {
-  // const { user, logout } = useContext(AuthContext);
-
   return (
-    <div className="min-h-screen bg-gradient-to-b from-black to-gray-800 text-white text-center flex flex-col items-center justify-center px-6 py-20 space-y-16">
+    <div className="min-h-screen bg-gradient-to-b from-black to-gray-800 text-white flex flex-col items-center justify-center px-6 py-20 space-y-16 text-center">
       <img
         src="https://www.atlas-platform.io/img/bcgxwhiteimproved.png"
         alt="BCG X Logo"
-        className="h-12"
+        className="h-12 mb-8"
       />
 
-      <div className="space-y-6">
-        <h1 className="text-4xl font-bold">Price Optimization Tool</h1>
+      <div className="space-y-4">
+        <h1 className="text-5xl font-bold hover:text-teal-400 transition-colors">
+          Price Optimization Tool
+        </h1>
         <p className="text-gray-300 max-w-2xl mx-auto">
           An intelligent assistant to help suppliers, buyers, and managers forecast product
           demand and optimize pricing for maximum profitability.
         </p>
       </div>
-{/* 
-      {user ? (
-        <div className="space-y-4">
-          <p className="text-lg">
-            Welcome, <span className="font-bold">{user.username}</span>,{' '}
-            <span className="italic capitalize">{user.role || 'user'}</span>
-          </p>
-          <button
-            onClick={logout}
-            className="px-6 py-2 bg-white text-black rounded-full font-semibold shadow hover:bg-gray-200 transition"
-          >
-            Logout
-          </button>
-        </div>
-      ) : (
-        <div className="flex space-x-6">
-          <Link
-            to="/login"
-            className="px-6 py-2 bg-white text-black rounded-full font-semibold shadow hover:bg-gray-200 transition"
-          >
-            Login
-          </Link>
-          <Link
-            to="/register"
-            className="px-6 py-2 bg-white text-black rounded-full font-semibold shadow hover:bg-gray-200 transition"
-          >
-            Register
-          </Link>
-        </div>
-      )} */}
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-10 pt-10">
         <Link
           to="/products"
-          className="bg-white text-black rounded-xl shadow p-8 text-left hover:shadow-2xl transition space-y-4 h-96 w-full max-w-md mx-auto flex flex-col justify-between"
+          className="group relative bg-white text-black rounded-xl shadow px-8 pt-16 pb-8 hover:shadow-2xl transition-transform transform hover:scale-105 min-h-[30rem] max-w-sm mx-auto flex flex-col justify-between text-left"
         >
-          <div>
+          <div className="space-y-16">
             <img
               src="https://cdn-icons-png.flaticon.com/128/1171/1171520.png"
               alt="Manage"
-              className="h-10 mb-4"
+              className="h-20 mb-16"
             />
-            <h2 className="text-2xl font-bold mb-1">Create and Manage Product</h2>
-            <p className="text-sm text-gray-700">
-              Add, edit, or remove products. View and filter your catalog by category or search
-              by keyword.
-            </p>
+            <div>
+              <h2 className="text-2xl font-bold mb-2 transition-colors group-hover:text-teal-400">
+                Create and Manage Product
+              </h2>
+              <p className="text-sm text-gray-700">
+                Add, edit, or remove products. View and filter your catalog by category or keyword.
+                Easily manage inventory levels and monitor sales performance.
+              </p>
+            </div>
           </div>
           <img
-            src="https://toppng.com/uploads/preview/download-high-resolution-black-arrow-11562894731b2btu7hel2.png"
+            src="https://png.pngtree.com/png-clipart/20190619/original/pngtree-right-arrow-glyph-black-icon-png-image_4008260.png"
             alt="arrow"
-            className="h-4 self-end"
+            className="h-8 self-start mt-8"
           />
         </Link>
 
         <Link
           to="/optimize"
-          className="bg-white text-black rounded-xl shadow p-8 text-left hover:shadow-2xl transition space-y-4 h-96 w-full max-w-md mx-auto flex flex-col justify-between"
+          className="group relative bg-white text-black rounded-xl shadow px-8 pt-16 pb-8 hover:shadow-2xl transition-transform transform hover:scale-105 min-h-[30rem] max-w-sm mx-auto flex flex-col justify-between text-left"
         >
-          <div>
+          <div className="space-y-16">
             <img
-              src="https://th.bing.com/th/id/OIP.3uHp3kp1SWWo3L4eE54VywHaE7"
+              src="https://cdn-icons-png.flaticon.com/512/559/559678.png"
               alt="Optimize"
-              className="h-10 mb-4"
+              className="h-20 mb-16"
             />
-            <h2 className="text-2xl font-bold mb-1">Pricing Optimization</h2>
-            <p className="text-sm text-gray-700">
-              Use demand trends and elasticity to determine the optimal selling price for each
-              product.
-            </p>
+            <div>
+              <h2 className="text-2xl font-bold mb-2 transition-colors group-hover:text-teal-400">
+                Pricing Optimization
+              </h2>
+              <p className="text-sm text-gray-700">
+                Use demand trends and elasticity to determine the optimal selling price for each product.
+                Improve margins and maximize profitability with data-driven insights.
+              </p>
+            </div>
           </div>
           <img
-            src="https://toppng.com/uploads/preview/download-high-resolution-black-arrow-11562894731b2btu7hel2.png"
+            src="https://png.pngtree.com/png-clipart/20190619/original/pngtree-right-arrow-glyph-black-icon-png-image_4008260.png"
             alt="arrow"
-            className="h-4 self-end"
+            className="h-8 self-start mt-8"
           />
         </Link>
       </div>
