@@ -471,10 +471,6 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 <div align="center">
 
-**Made with ❤️ by the PricePilot Team**
-
-[![GitHub stars](https://img.shields.io/github/stars/your-username/price-optimiser-tool?style=social)](https://github.com/Tuhin-SnapD/PricePilot-Intelligent-Pricing-Dashboard)
-[![GitHub forks](https://img.shields.io/github/forks/your-username/price-optimiser-tool?style=social)](https://github.com/Tuhin-SnapD/PricePilot-Intelligent-Pricing-Dashboard)
-[![GitHub issues](https://img.shields.io/github/issues/your-username/price-optimiser-tool)](https://github.com/your-username/price-optimiser-tool/issues](https://github.com/Tuhin-SnapD/PricePilot-Intelligent-Pricing-Dashboard))
+**Made with ❤️ by Tuhin-SnapD**
 
 </div>
