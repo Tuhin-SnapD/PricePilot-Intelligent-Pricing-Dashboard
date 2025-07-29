@@ -408,11 +408,6 @@ price-optimiser-frontend/
 - **ML Price Optimizer**: Random Forest-based price prediction
 - **A/B Testing**: Strategy simulation and comparison
 
-### User Guides
-- [Quick Start Guide](QUICK_START.md)
-- [Advanced Features Guide](ADVANCED_FEATURES_GUIDE.md)
-- [API Testing Guide](API_TESTING_GUIDE.md)
-
 ---
 
 ## 🧪 Testing
@@ -469,9 +464,8 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 📞 Support
 
-- **Documentation**: [GitHub Wiki](https://github.com/your-username/price-optimiser-tool/wiki)
-- **Issues**: [GitHub Issues](https://github.com/your-username/price-optimiser-tool/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/your-username/price-optimiser-tool/discussions)
+- **Documentation**: [GitHub Wiki](https://github.com/Tuhin-SnapD/PricePilot-Intelligent-Pricing-Dashboard)
+- **Issues**: [GitHub Issues](https://github.com/Tuhin-SnapD/PricePilot-Intelligent-Pricing-Dashboard/issues)
 
 ---
 
@@ -479,8 +473,8 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 **Made with ❤️ by the PricePilot Team**
 
-[![GitHub stars](https://img.shields.io/github/stars/your-username/price-optimiser-tool?style=social)](https://github.com/your-username/price-optimiser-tool)
-[![GitHub forks](https://img.shields.io/github/forks/your-username/price-optimiser-tool?style=social)](https://github.com/your-username/price-optimiser-tool)
-[![GitHub issues](https://img.shields.io/github/issues/your-username/price-optimiser-tool)](https://github.com/your-username/price-optimiser-tool/issues)
+[![GitHub stars](https://img.shields.io/github/stars/your-username/price-optimiser-tool?style=social)](https://github.com/Tuhin-SnapD/PricePilot-Intelligent-Pricing-Dashboard)
+[![GitHub forks](https://img.shields.io/github/forks/your-username/price-optimiser-tool?style=social)](https://github.com/Tuhin-SnapD/PricePilot-Intelligent-Pricing-Dashboard)
+[![GitHub issues](https://img.shields.io/github/issues/your-username/price-optimiser-tool)](https://github.com/your-username/price-optimiser-tool/issues](https://github.com/Tuhin-SnapD/PricePilot-Intelligent-Pricing-Dashboard))
 
 </div>
