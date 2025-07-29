@@ -14,3 +14,9 @@ sqlparse==0.5.3
 typing_extensions==4.14.0
 tzdata==2025.2
 whitenoise==6.9.0
+
+# Machine Learning and Data Science dependencies
+scikit-learn==1.5.2
+pandas==2.2.3
+matplotlib==3.9.1
+seaborn==0.13.2

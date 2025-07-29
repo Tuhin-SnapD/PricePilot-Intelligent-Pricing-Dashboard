@@ -33,7 +33,7 @@ class Command(BaseCommand):
                         'units_sold': row['units_sold'],
                         'customer_rating': row['customer_rating'],
                         'demand_forecast': forecast,
-                        'optimized_price': row['optimized_price']
+                        'optimized_price': row.get('demand_forecast_value', 0)
                     }
                 )
         self.stdout.write(self.style.SUCCESS('✅ Product data imported successfully.'))
