@@ -299,7 +299,7 @@ def advanced_optimize_price(product: Dict) -> Dict[str, Any]:
 
 1. **Clone the repository**
    ```bash
-   git clone https://github.com/your-username/price-optimiser-tool.git
+   git clone https://github.com/Tuhin-SnapD/PricePilot-Intelligent-Pricing-Dashboard
    cd price-optimiser-tool
    ```
 
