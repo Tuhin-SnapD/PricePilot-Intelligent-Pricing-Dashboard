@@ -81,7 +81,7 @@ class CustomLoginView(generics.GenericAPIView):
             logger.error(f"Login error: {str(e)}")
             return Response({
                 'success': False,
-                'error': f'Login failed: {str(e)}'
+                'error': 'Invalid credentials'
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 class FallbackLoginView(TokenObtainPairView):
@@ -98,7 +98,7 @@ class FallbackLoginView(TokenObtainPairView):
             logger.error(f"Fallback login error: {str(e)}")
             return Response({
                 'success': False,
-                'error': 'Login failed'
+                'error': 'Invalid credentials'
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 class UserDetailView(generics.RetrieveAPIView):

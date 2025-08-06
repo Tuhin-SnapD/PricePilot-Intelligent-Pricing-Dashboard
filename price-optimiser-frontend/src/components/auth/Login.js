@@ -38,31 +38,8 @@ const Login = () => {
       setTimeout(() => navigate("/"), 1500);
     } catch (err) {
       console.error("Login error:", err);
-      let errorMessage = "Login failed";
-      
-      if (err.response) {
-        // Server responded with error
-        const data = err.response.data;
-        if (data.detail) {
-          errorMessage = data.detail;
-        } else if (data.non_field_errors) {
-          errorMessage = data.non_field_errors.join(', ');
-        } else if (data.username) {
-          errorMessage = `Username: ${data.username.join(', ')}`;
-        } else if (data.password) {
-          errorMessage = `Password: ${data.password.join(', ')}`;
-        } else if (typeof data === 'string') {
-          errorMessage = data;
-        }
-      } else if (err.request) {
-        // Network error
-        errorMessage = "Network error. Please check your connection.";
-      } else {
-        // Other error
-        errorMessage = err.message || "Login failed";
-      }
-      
-      setError(errorMessage);
+      // Always show "Invalid credentials" for any login failure
+      setError("Invalid credentials");
     } finally {
       setLoading(false);
     }

@@ -1,19 +1,13 @@
 import React, { useContext, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { AuthContext } from "../../contexts/AuthContext";
-import { UserCircleIcon } from "@heroicons/react/solid";
-import { FiBell, FiSettings, FiLogOut, FiUser, FiChevronDown, FiMenu, FiX } from "react-icons/fi";
+import { FiSettings, FiLogOut, FiUser, FiChevronDown, FiMenu, FiX } from "react-icons/fi";
 import { FaRocket } from "react-icons/fa";
 
 const Navbar = () => {
   const { user, logout } = useContext(AuthContext);
   const [showProfileDropdown, setShowProfileDropdown] = useState(false);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
-  const [notifications] = useState([
-    { id: 1, message: "Price optimization completed for 15 products", time: "2 min ago", unread: true },
-    { id: 2, message: "New demand forecast available", time: "1 hour ago", unread: true },
-    { id: 3, message: "Inventory alert: Low stock for Electronics", time: "3 hours ago", unread: false }
-  ]);
   const location = useLocation();
 
   const navigationItems = [
@@ -30,8 +24,6 @@ const Navbar = () => {
     setShowProfileDropdown(false);
     logout();
   };
-
-  const unreadNotifications = notifications.filter(n => n.unread).length;
 
   return (
     <header className="w-full bg-black text-white px-6 py-3 flex justify-between items-center shadow-lg border-b border-gray-800">
@@ -72,18 +64,6 @@ const Navbar = () => {
       {/* User Section */}
       {user ? (
         <div className="flex items-center space-x-4">
-          {/* Notifications */}
-          <div className="relative">
-            <button className="relative p-2 text-gray-300 hover:text-white hover:bg-gray-800 rounded-lg transition-colors">
-              <FiBell className="w-5 h-5" />
-              {unreadNotifications > 0 && (
-                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
-                  {unreadNotifications}
-                </span>
-              )}
-            </button>
-          </div>
-
           {/* User Profile Dropdown */}
           <div className="relative">
             <button

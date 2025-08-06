@@ -1,281 +1,399 @@
-# Price Optimizer Frontend
+# PricePilot Frontend
 
-A React.js single-page application for managing products, visualizing demand forecasts, and computing optimal prices. Built with Create React App, Tailwind CSS, Chart.js, and Axios.
+<div align="center">
 
----
+![React](https://img.shields.io/badge/React-18.0+-blue?style=for-the-badge&logo=react)
+![TypeScript](https://img.shields.io/badge/TypeScript-4.0+-blue?style=for-the-badge&logo=typescript)
+![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-3.0+-38B2AC?style=for-the-badge&logo=tailwind-css)
+![Chart.js](https://img.shields.io/badge/Chart.js-4.0+-FF6384?style=for-the-badge&logo=chart.js)
 
-## Table of Contents
+**Modern React-based frontend for PricePilot's AI-powered pricing optimization platform. Features intuitive dashboards, real-time analytics, and responsive design.**
 
-1. [Prerequisites](#prerequisites)  
-2. [Local Setup Guide](#local-setup-guide)  
-3. [Getting Started](#getting-started)  
-4. [Project Structure](#project-structure)  
-5. [Key Modules & Components](#key-modules--components)  
-6. [Styling & Theming](#styling--theming)  
-7. [Available Scripts](#available-scripts)  
-8. [Configuration](#configuration)  
-9. [Deployment](#deployment)  
-10. [License](#license)  
+[🚀 Quick Start](#quick-start) • [📊 Features](#features) • [🏗️ Architecture](#architecture) • [🔧 Development](#development) • [📚 Components](#components)
+
+</div>
 
 ---
 
-## Prerequisites
+## 🎯 Overview
 
-- **Node.js** (LTS recommended, ≥ 14.x).  
-- **npm** (bundled with Node) or **Yarn** ≥ 1.22.  
-- **Git** for version control.  
-- A running backend API (see backend README) at `http://localhost:8000/api`.
+The PricePilot Frontend is a sophisticated React application that provides an intuitive interface for managing products, visualizing demand forecasts, and computing optimal pricing strategies. Built with modern web technologies, it offers a seamless user experience with real-time data visualization and responsive design.
+
+### Key Capabilities
+
+- **📊 Interactive Dashboards**: Real-time analytics and performance metrics
+- **🎨 Modern UI/UX**: Beautiful, responsive design with Tailwind CSS
+- **📈 Data Visualization**: Advanced charts and graphs using Chart.js
+- **🔐 Secure Authentication**: JWT-based authentication with role-based access
+- **📱 Mobile-First Design**: Fully responsive across all devices
+- **⚡ Real-Time Updates**: Live data synchronization with backend APIs
 
 ---
 
-## Local Setup Guide
+## 🚀 Quick Start
 
-Follow these steps to get the frontend running locally:
+### Prerequisites
+- Node.js 16+ 
+- npm or Yarn
+- Git
 
-### 1. Clone the Repository
+### Installation
 
-```bash
-git clone https://github.com/your-org/price-optimizer-frontend.git
-cd price-optimizer-frontend
-```
-
-### 2. Install Dependencies
-
-Choose one:
-
-- **Using npm**  
-  ```bash
-  npm install
-  ```
-- **Using Yarn**  
-  ```bash
-  yarn install
-  ```
-
-This installs React, Tailwind CSS, Chart.js, Axios, and other required packages.
-
-### 3. Configure API Endpoint
-
-Instead of environment variables, this project uses a `config.js` file to manage runtime settings:
-
-1. Copy the example config:
+1. **Clone the repository**
    ```bash
+   git clone https://github.com/Tuhin-SnapD/PricePilot-Intelligent-Pricing-Dashboard
+   cd price-optimiser-frontend
+   ```
+
+2. **Install dependencies**
+   ```bash
+   npm install
+   # or
+   yarn install
+   ```
+
+3. **Configure API endpoint**
+   ```bash
+   # Copy the example config
    cp src/config.example.js src/config.js
    ```
-2. Open `src/config.js` and set your API URL:
-   ```js
-   // src/config.js
+   
+   Edit `src/config.js`:
+   ```javascript
    module.exports = {
      API_URL: 'http://localhost:8000/api',
    };
    ```
-3. If your backend runs at a different address, update `API_URL` accordingly.
 
-### 4. Tailwind CSS Setup
+4. **Start development server**
+   ```bash
+   npm start
+   # or
+   yarn start
+   ```
 
-Tailwind is preconfigured via PostCSS. No additional setup is needed beyond installing dependencies.
-
-### 5. Start the Development Server
-
-```bash
-npm start
-# or
-yarn start
-```
-
-- Application opens at `http://localhost:3000`.  
-- Hot-reloading enabled for rapid development.
-
-### 6. Verify API Connectivity
-
-- Log in at `/login`.  
-- Ensure products load under `/products`.  
-- Test the demand forecast modal and pricing optimization features.
-
-### 7. Build for Production
-
-```bash
-npm run build
-# or
-yarn build
-```
-
-Generates optimized static files in the `build/` directory.
+5. **Access the application**
+   - Frontend: http://localhost:3000
+   - Make sure the backend is running at http://localhost:8000
 
 ---
 
-## Project Structure
+## 📊 Features
 
+### Core Features
+- **🤖 AI-Powered Analytics**: Interactive dashboards for pricing insights
+- **📈 Demand Forecasting**: Visual demand prediction with multiple algorithms
+- **💰 Price Optimization**: Real-time pricing recommendations
+- **📊 A/B Testing Simulation**: Strategy comparison and outcome prediction
+- **🎯 Inventory Analysis**: Stock-aware pricing recommendations
+- **📱 Responsive Design**: Mobile-first approach with Tailwind CSS
+
+### Advanced Features
+- **🎨 Modern UI Components**: Reusable, accessible React components
+- **📊 Interactive Charts**: Chart.js-powered data visualizations
+- **🔐 Role-Based Access**: Different interfaces for admin, supplier, and buyer roles
+- **⚡ Real-Time Updates**: Live data synchronization
+- **📤 Data Export**: CSV export functionality
+- **🔍 Advanced Filtering**: Product search and filtering capabilities
+
+---
+
+## 🏗️ Architecture
+
+### Project Structure
 ```
-price-optimizer-frontend/
+price-optimiser-frontend/
 ├── public/
 │   └── index.html
 ├── src/
-│   ├── api.js
-│   ├── config.js         # API endpoint and other runtime settings
-│   ├── config.example.js
-│   ├── App.js
-│   ├── index.js
-│   ├── routes.js
-│   ├── contexts/
-│   │   └── AuthContext.js
 │   ├── components/
-│   │   ├── auth/
+│   │   ├── analytics/          # Analytics dashboard components
+│   │   │   ├── ABTestingSimulator.js
+│   │   │   ├── AnalyticsDashboard.js
+│   │   │   ├── ElasticityHeatmap.js
+│   │   │   ├── InventoryAnalysis.js
+│   │   │   └── MLOptimization.js
+│   │   ├── auth/              # Authentication components
 │   │   │   ├── Login.js
 │   │   │   └── Register.js
-│   │   ├── common/
+│   │   ├── common/            # Shared components
+│   │   │   ├── ErrorBoundary.js
 │   │   │   ├── Navbar.js
 │   │   │   └── PrivateRoute.js
-│   │   ├── products/
-│   │   │   ├── ProductList.js
-│   │   │   ├── ProductTable.js
-│   │   │   ├── ProductForm.js
-│   │   │   └── SearchFilter.js
-│   │   ├── forecasts/
-│   │   │   ├── DemandForecast.js
-│   │   │   └── DemandForecastChartModal.js
-│   │   └── optimization/
-│   │       └── PricingOptimization.js
-│   ├── styles/
-│   │   ├── index.css
-│   │   └── tailwind.config.js
-│   └── utils/
-│       └── formatPrice.js
-├── .gitignore
+│   │   ├── forecasts/         # Forecasting components
+│   │   │   └── DemandForecast.js
+│   │   ├── optimization/      # Pricing optimization UI
+│   │   │   └── PricingOptimization.js
+│   │   └── products/          # Product management
+│   │       ├── ProductForm.js
+│   │       ├── ProductList.js
+│   │       ├── ProductTable.js
+│   │       └── SearchFilter.js
+│   ├── contexts/              # React contexts
+│   │   └── AuthContext.js
+│   ├── api.js                 # API integration layer
+│   ├── config.js              # Configuration settings
+│   ├── App.js                 # Main application component
+│   └── index.js               # Application entry point
 ├── package.json
-└── README.md
+└── tailwind.config.js
 ```
 
----
-
-## Key Modules & Components
-
-### API Layer (`src/api.js`)
-
-- Configures Axios with base URL from `REACT_APP_API_URL`.  
-- Attaches JWT token on each request header.  
-- Exports helper methods: `.get()`, `.post()`, `.put()`, `.delete()`.
+### Technology Stack
+- **React 18**: Modern React with hooks and functional components
+- **Tailwind CSS**: Utility-first CSS framework for rapid UI development
+- **Chart.js**: Interactive charts and data visualization
+- **Axios**: HTTP client for API communication
+- **React Router**: Client-side routing
+- **Context API**: State management for authentication
 
 ---
 
-### Authentication (`src/contexts/AuthContext.js`)
+## 🔧 Development
 
-- **AuthContext** provides `user`, `login()`, `logout()`, and token persistence.  
-- Stores JWT in `localStorage`.  
-- On app load, decodes token to set `user` (including `role`).  
-- Redirects unauthenticated users to `/login`.
+### Available Scripts
+
+```bash
+# Start development server
+npm start
+
+# Build for production
+npm run build
+
+# Run tests
+npm test
+
+# Eject from Create React App (not recommended)
+npm run eject
+```
+
+### Development Workflow
+
+1. **Component Development**
+   - Create new components in appropriate directories
+   - Follow the existing component structure
+   - Use Tailwind CSS for styling
+
+2. **API Integration**
+   - Use the `api.js` module for all API calls
+   - Handle loading states and error boundaries
+   - Implement proper error handling
+
+3. **State Management**
+   - Use React Context for global state (auth, user data)
+   - Use local state for component-specific data
+   - Implement proper state updates and re-renders
+
+4. **Styling Guidelines**
+   - Use Tailwind CSS utility classes
+   - Follow mobile-first responsive design
+   - Maintain consistent spacing and typography
 
 ---
 
-### Routing & Guards
+## 📚 Components
 
-- **`src/routes.js`** defines public (`/login`, `/register`) and protected routes (`/products`, `/forecast`, `/optimize`).  
-- **`PrivateRoute.jsx`** wraps protected routes, checking `user` from `AuthContext`.
+### Authentication Components
 
----
+#### Login.js
+- JWT-based authentication form
+- Form validation and error handling
+- Redirect to dashboard on success
+
+#### Register.js
+- User registration form
+- Role selection (admin, supplier, buyer)
+- Password strength validation
 
 ### Product Management
 
-1. **`ProductList.jsx`**  
-   - Fetches product list via `api.get('/products/')`.  
-   - Holds state: `products`, `editingProduct`, `showForm`, `filterParams`.  
-   - Renders **SearchFilter**, **ProductTable**, and **ProductForm**.
+#### ProductList.js
+- Main product management interface
+- Integrates search, table, and form components
+- Handles product CRUD operations
 
-2. **`SearchFilter.jsx`**  
-   - Controlled inputs for name/category.  
-   - On submit, passes filter object to `ProductList`.
+#### ProductTable.js
+- Responsive data table for products
+- Sortable columns and pagination
+- Role-based action buttons
 
-3. **`ProductTable.jsx`**  
-   - Displays products in a responsive table.  
-   - Columns: Name, Category, Cost Price, Selling Price, Units Sold, Actions (view/edit/delete).  
-   - Checks `user.role` to show/hide columns or buttons.  
-   - Emits callbacks for edit/delete.
+#### ProductForm.js
+- Modal form for creating/editing products
+- Real-time validation
+- Auto-save functionality
 
-4. **`ProductForm.jsx`**  
-   - Modal form for creating/updating a product.  
-   - Controlled form state; validation for required fields.  
-   - Submits via `api.post('/products/')` or `api.put('/products/:id/')`.
+### Analytics Components
 
----
+#### AnalyticsDashboard.js
+- Main analytics interface
+- Real-time performance metrics
+- Interactive data visualizations
 
-### Demand Forecasting
+#### ABTestingSimulator.js
+- A/B testing strategy simulation
+- Visual comparison of different approaches
+- Outcome prediction and analysis
 
-- **`DemandForecast.jsx`** button toggles forecast view.  
-- **`DemandForecastChartModal.jsx`**  
-  - Fetches forecast data from `/products/forecast/?ids=[…]`.  
-  - Uses Chart.js to render a line chart of “selling_price” vs. “forecasted_demand”.  
-  - Configurable to plot only selected products.
+#### ElasticityHeatmap.js
+- Price elasticity visualization
+- Category-based heatmap
+- Interactive filtering
 
----
+### Optimization Components
 
-### Pricing Optimization
+#### PricingOptimization.js
+- AI-powered pricing recommendations
+- Real-time optimization results
+- Strategy comparison and selection
 
-- **`PricingOptimization.jsx`**  
-  - Fetches `/products/` and `/products/optimize/?ids=[…]`.  
-  - Merges cost, current price, and optimized price.  
-  - Displays results in a table similar to **ProductTable**, with an extra “Optimized Price” column.  
-  - Toggle “Include Forecast” switch to re-fetch with/without forecast.
-
----
-
-### Shared UI Components
-
-- **`Navbar.jsx`**  
-  - Shows app logo, navigation links, and “Logout” button.  
-  - Highlights active route.
-
-- **`PrivateRoute.jsx`**  
-  - Wraps `<Route>` and redirects to `/login` if no valid `user`.
-
-- **`formatPrice.js`**  
-  - Utility to format numbers as USD (`$xx.xx`).
+#### DemandForecast.js
+- Multi-algorithm demand forecasting
+- Interactive charts and graphs
+- Historical trend analysis
 
 ---
 
-## Styling & Theming
+## 🎨 Styling & Theming
 
-- **Tailwind CSS** via `postcss` integration.  
-- Custom colors and spacing in `tailwind.config.js`.  
-- Utility-first classes throughout components.
-
----
-
-## Styling & Theming
-
-- **Tailwind CSS** via PostCSS.  
-- Custom colors and spacing defined in `tailwind.config.js`.
-
----
-
-## Available Scripts
-
-- `npm start` / `yarn start`: Dev server with hot reload.  
-- `npm run build` / `yarn build`: Production build.  
-- `npm test` / `yarn test`: Run tests.  
-- `npm run eject` / `yarn eject`: Eject CRA configuration (not recommended).
-
----
-
-## Configuration
-
-Settings are managed via `src/config.js`:
-
-```js
+### Tailwind CSS Configuration
+```javascript
+// tailwind.config.js
 module.exports = {
-  API_URL: 'http://localhost:8000/api',
-};
+  content: ["./src/**/*.{js,jsx,ts,tsx}"],
+  theme: {
+    extend: {
+      colors: {
+        primary: '#3B82F6',
+        secondary: '#10B981',
+        accent: '#F59E0B',
+      },
+      fontFamily: {
+        sans: ['Inter', 'sans-serif'],
+      },
+    },
+  },
+  plugins: [],
+}
+```
+
+### Design System
+- **Color Palette**: Consistent primary, secondary, and accent colors
+- **Typography**: Inter font family with proper hierarchy
+- **Spacing**: Consistent spacing scale using Tailwind utilities
+- **Components**: Reusable component patterns
+
+---
+
+## 📱 Responsive Design
+
+### Breakpoints
+- **Mobile**: < 640px
+- **Tablet**: 640px - 1024px
+- **Desktop**: > 1024px
+
+### Mobile-First Approach
+- All components designed for mobile first
+- Progressive enhancement for larger screens
+- Touch-friendly interactions
+
+---
+
+## 🔐 Security
+
+### Authentication
+- JWT token-based authentication
+- Secure token storage in localStorage
+- Automatic token refresh
+- Role-based access control
+
+### Data Protection
+- Input validation and sanitization
+- XSS protection
+- CSRF token handling
+- Secure API communication
+
+---
+
+## 🧪 Testing
+
+### Testing Strategy
+- Unit tests for individual components
+- Integration tests for component interactions
+- E2E tests for critical user flows
+
+### Running Tests
+```bash
+# Run all tests
+npm test
+
+# Run tests in watch mode
+npm test -- --watch
+
+# Generate coverage report
+npm test -- --coverage
 ```
 
 ---
 
-## Deployment
+## 📦 Deployment
 
-1. Build: `npm run build`.  
-2. Serve `build/` directory (Netlify, Vercel, Nginx, etc.).  
-3. Ensure `API_URL` in `config.js` points to the production API.
+### Build Process
+```bash
+# Create production build
+npm run build
+
+# The build folder contains optimized static files
+```
+
+### Deployment Options
+- **Netlify**: Drag and drop build folder
+- **Vercel**: Connect GitHub repository
+- **AWS S3**: Upload build files to S3 bucket
+- **Nginx**: Serve build folder with Nginx
+
+### Environment Configuration
+- Update `config.js` with production API URL
+- Set appropriate CORS headers on backend
+- Configure CDN for static assets
 
 ---
 
-## License
+## 🤝 Contributing
 
-MIT © Your Name / Your Organization
+### Development Setup
+1. Fork the repository
+2. Create a feature branch
+3. Install dependencies: `npm install`
+4. Make your changes
+5. Add tests for new functionality
+6. Submit a pull request
+
+### Code Standards
+- Follow React best practices
+- Use functional components with hooks
+- Implement proper error handling
+- Write meaningful commit messages
+- Add JSDoc comments for complex functions
+
+---
+
+## 📄 License
+
+This project is licensed under the MIT License - see the [LICENSE](../LICENSE) file for details.
+
+---
+
+## 🙏 Acknowledgments
+
+- **React Team**: For the amazing React framework
+- **Tailwind CSS**: For the utility-first CSS framework
+- **Chart.js**: For powerful data visualization
+- **Create React App**: For the development setup
+
+---
+
+<div align="center">
+
+**Made with ❤️ by the PricePilot Team**
+
+</div>
