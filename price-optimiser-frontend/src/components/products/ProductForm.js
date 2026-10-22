@@ -1,165 +1,194 @@
-import React, { useState, useEffect } from "react";
-import { FiX, FiSave, FiAlertCircle, FiCheckCircle, FiUpload, FiPackage, FiDollarSign, FiTag, FiFileText, FiBox, FiTrendingUp, FiStar } from "react-icons/fi";
+import React, { useMemo, useState, useEffect } from "react";
+import {
+  FiX,
+  FiSave,
+  FiAlertCircle,
+  FiPackage,
+  FiDollarSign,
+  FiTag,
+  FiFileText,
+  FiBox,
+  FiStar,
+} from "react-icons/fi";
 import api from "../../api";
+import { CATEGORY_OPTIONS, getCategoryIcon } from "../../constants/categories";
 
-const ProductForm = ({ product, onSave, onCancel }) => {
+const EMPTY_FORM = {
+  name: "",
+  category: "",
+  cost_price: "",
+  selling_price: "",
+  description: "",
+  stock_available: "",
+  units_sold: "",
+  customer_rating: "",
+};
+
+const toInputValue = (value) => (value === null || value === undefined ? "" : String(value));
+
+const ProductForm = ({ product, categories = [], onSave, onCancel }) => {
   const isEdit = Boolean(product);
-  const [formData, setFormData] = useState({
-    name: "",
-    category: "",
-    cost_price: "",
-    selling_price: "",
-    description: "",
-    stock_available: "",
-    units_sold: "",
-    customer_rating: "",
-  });
+  const [formData, setFormData] = useState(EMPTY_FORM);
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [autoSaveStatus, setAutoSaveStatus] = useState("");
-  const [lastSaved, setLastSaved] = useState(null);
 
-  const categories = [
-    { value: "Electronics", icon: "📱", color: "bg-blue-500" },
-    { value: "Outdoor", icon: "🏕️", color: "bg-green-500" },
-    { value: "Sustainable", icon: "🌱", color: "bg-emerald-500" },
-    { value: "Home", icon: "🏠", color: "bg-orange-500" },
-    { value: "Fitness", icon: "💪", color: "bg-purple-500" },
-    { value: "Stationary", icon: "📝", color: "bg-gray-500" },
-    { value: "Apparel", icon: "👕", color: "bg-pink-500" },
-  ];
+  const categoryOptions = useMemo(() => {
+    const extras = categories
+      .filter((category) => !CATEGORY_OPTIONS.some((option) => option.value === category))
+      .map((category) => ({ value: category, icon: getCategoryIcon(category) }));
+    return [...CATEGORY_OPTIONS, ...extras];
+  }, [categories]);
 
   useEffect(() => {
     if (product) {
       setFormData({
-        name: product.name || "",
-        category: product.category || "",
-        cost_price: product.cost_price || "",
-        selling_price: product.selling_price || "",
-        description: product.description || "",
-        stock_available: product.stock_available || "",
-        units_sold: product.units_sold || "",
-        customer_rating: product.customer_rating || "",
+        name: toInputValue(product.name),
+        category: toInputValue(product.category),
+        cost_price: toInputValue(product.cost_price),
+        selling_price: toInputValue(product.selling_price),
+        description: toInputValue(product.description),
+        stock_available: toInputValue(product.stock_available),
+        units_sold: toInputValue(product.units_sold),
+        customer_rating: toInputValue(product.customer_rating),
       });
+    } else {
+      setFormData({ ...EMPTY_FORM });
     }
+    setErrors({});
   }, [product]);
 
-  // Auto-save functionality
-  useEffect(() => {
-    const autoSaveTimer = setTimeout(() => {
-      if (formData.name && formData.category && !isSubmitting) {
-        handleAutoSave();
-      }
-    }, 3000);
-
-    return () => clearTimeout(autoSaveTimer);
-  }, [formData]);
-
   const validateForm = () => {
-    const newErrors = {};
-    
+    const nextErrors = {};
+    const cost = parseFloat(formData.cost_price);
+    const selling = parseFloat(formData.selling_price);
+    const stock = Number(formData.stock_available);
+    const units = Number(formData.units_sold);
+    const rating = parseFloat(formData.customer_rating);
+
     if (!formData.name.trim()) {
-      newErrors.name = "Product name is required";
-    } else if (formData.name.length < 2) {
-      newErrors.name = "Product name must be at least 2 characters";
+      nextErrors.name = "Product name is required";
+    } else if (formData.name.trim().length < 2) {
+      nextErrors.name = "Product name must be at least 2 characters";
     }
-    
+
     if (!formData.category) {
-      newErrors.category = "Category is required";
+      nextErrors.category = "Category is required";
     }
-    
-    if (!formData.cost_price || parseFloat(formData.cost_price) <= 0) {
-      newErrors.cost_price = "Valid cost price is required";
+
+    if (formData.cost_price === "" || !Number.isFinite(cost) || cost <= 0) {
+      nextErrors.cost_price = "Enter a cost price greater than 0";
     }
-    
-    if (!formData.selling_price || parseFloat(formData.selling_price) <= 0) {
-      newErrors.selling_price = "Valid selling price is required";
-    } else if (parseFloat(formData.selling_price) <= parseFloat(formData.cost_price)) {
-      newErrors.selling_price = "Selling price must be higher than cost price";
+
+    if (formData.selling_price === "" || !Number.isFinite(selling) || selling <= 0) {
+      nextErrors.selling_price = "Enter a selling price greater than 0";
+    } else if (Number.isFinite(cost) && selling <= cost) {
+      nextErrors.selling_price = "Selling price must be higher than the cost price";
     }
-    
-    if (!formData.stock_available || parseInt(formData.stock_available) < 0) {
-      newErrors.stock_available = "Valid stock quantity is required";
+
+    if (formData.stock_available === "" || !Number.isInteger(stock) || stock < 0) {
+      nextErrors.stock_available = "Enter a whole number of 0 or more";
     }
-    
-    if (!formData.units_sold || parseInt(formData.units_sold) < 0) {
-      newErrors.units_sold = "Valid units sold is required";
+
+    if (formData.units_sold === "" || !Number.isInteger(units) || units < 0) {
+      nextErrors.units_sold = "Enter a whole number of 0 or more";
     }
-    
-    if (formData.customer_rating && (parseFloat(formData.customer_rating) < 0 || parseFloat(formData.customer_rating) > 5)) {
-      newErrors.customer_rating = "Rating must be between 0 and 5";
+
+    if (
+      formData.customer_rating !== "" &&
+      (!Number.isFinite(rating) || rating < 0 || rating > 5)
+    ) {
+      nextErrors.customer_rating = "Rating must be between 0 and 5";
     }
-    
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+
+    setErrors(nextErrors);
+    return Object.keys(nextErrors).length === 0;
   };
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
-    
-    // Clear error when user starts typing
+  const handleChange = (event) => {
+    const { name, value } = event.target;
+    setFormData((previous) => ({ ...previous, [name]: value }));
     if (errors[name]) {
-      setErrors(prev => ({ ...prev, [name]: "" }));
+      setErrors((previous) => ({ ...previous, [name]: "" }));
     }
   };
 
-  const handleAutoSave = async () => {
-    if (!validateForm()) return;
-    
-    try {
-      setAutoSaveStatus("saving");
-      if (isEdit) {
-        await api.put(`/products/${product.id}/`, formData);
-      } else {
-        await api.post("/products/", formData);
-      }
-      setAutoSaveStatus("saved");
-      setLastSaved(new Date());
-      setTimeout(() => setAutoSaveStatus(""), 2000);
-    } catch (err) {
-      setAutoSaveStatus("error");
-      setTimeout(() => setAutoSaveStatus(""), 3000);
+  const handleCategoryChange = (category) => {
+    setFormData((previous) => ({ ...previous, category }));
+    if (errors.category) {
+      setErrors((previous) => ({ ...previous, category: "" }));
     }
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const handleSubmit = async (event) => {
+    event.preventDefault();
     if (!validateForm()) return;
-    
+
+    const payload = {
+      ...formData,
+      name: formData.name.trim(),
+      description: formData.description.trim(),
+      customer_rating: formData.customer_rating === "" ? null : formData.customer_rating,
+    };
+
+    setIsSubmitting(true);
     try {
-      setIsSubmitting(true);
       if (isEdit) {
-        await api.put(`/products/${product.id}/`, formData);
+        await api.put(`/products/${product.id}/`, payload);
       } else {
-        await api.post("/products/", formData);
+        await api.post("/products/", payload);
       }
       onSave();
     } catch (err) {
-      console.error(err);
-      setErrors({ submit: "Error saving product. Please try again." });
+      const data = err.response?.data;
+      const fieldErrors = {};
+
+      if (data && typeof data === "object") {
+        ["name", "category", "cost_price", "selling_price", "stock_available", "units_sold", "customer_rating", "description"].forEach(
+          (field) => {
+            if (data[field]) {
+              fieldErrors[field] = Array.isArray(data[field])
+                ? data[field].join(" ")
+                : String(data[field]);
+            }
+          }
+        );
+      }
+
+      let message = data?.detail || data?.error;
+      if (data?.non_field_errors) {
+        message = Array.isArray(data.non_field_errors)
+          ? data.non_field_errors.join(" ")
+          : data.non_field_errors;
+      }
+      if (!message && Object.keys(fieldErrors).length === 0) {
+        message =
+          err.response?.status === 403
+            ? "You do not have permission to save products."
+            : "Unable to save the product. Please try again.";
+      }
+
+      setErrors({ ...fieldErrors, ...(message ? { submit: message } : {}) });
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const getProfitMargin = () => {
-    const cost = parseFloat(formData.cost_price) || 0;
-    const selling = parseFloat(formData.selling_price) || 0;
-    if (cost === 0 || selling === 0) return 0;
-    return ((selling - cost) / selling * 100).toFixed(1);
-  };
+  const cost = parseFloat(formData.cost_price);
+  const selling = parseFloat(formData.selling_price);
+  const margin =
+    Number.isFinite(cost) && Number.isFinite(selling) && selling > 0
+      ? ((selling - cost) / selling) * 100
+      : null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-60 px-4 py-6 overflow-y-auto">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-60 px-4 py-6">
       <form
         onSubmit={handleSubmit}
-        className="relative w-full max-w-4xl bg-gray-900 text-white rounded-2xl p-8 shadow-2xl"
+        className="relative w-full max-w-4xl max-h-[90vh] overflow-y-auto bg-gray-900 text-white rounded-2xl p-6 sm:p-8 shadow-2xl"
       >
-        {/* Header */}
-        <div className="flex items-center justify-between mb-8">
+        <div className="flex items-start justify-between mb-6 sm:mb-8">
           <div className="flex items-center space-x-3">
-            <div className="flex items-center justify-center w-12 h-12 bg-gradient-to-br from-teal-400 to-teal-600 rounded-xl">
+            <div className="flex items-center justify-center w-12 h-12 bg-gradient-to-br from-teal-400 to-teal-600 rounded-xl shrink-0">
               <FiPackage className="text-white text-xl" />
             </div>
             <div>
@@ -171,59 +200,33 @@ const ProductForm = ({ product, onSave, onCancel }) => {
               </p>
             </div>
           </div>
-          
-          <div className="flex items-center space-x-3">
-            {/* Auto-save status */}
-            {autoSaveStatus && (
-              <div className="flex items-center space-x-2 text-sm">
-                {autoSaveStatus === "saving" && (
-                  <>
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-teal-400"></div>
-                    <span className="text-gray-400">Saving...</span>
-                  </>
-                )}
-                {autoSaveStatus === "saved" && (
-                  <>
-                    <FiCheckCircle className="text-green-400" />
-                    <span className="text-green-400">Saved</span>
-                  </>
-                )}
-                {autoSaveStatus === "error" && (
-                  <>
-                    <FiAlertCircle className="text-red-400" />
-                    <span className="text-red-400">Save failed</span>
-                  </>
-                )}
-              </div>
-            )}
-            
-            <button
-              type="button"
-              onClick={onCancel}
-              className="text-gray-400 hover:text-gray-200 transition-colors"
-            >
-              <FiX className="w-6 h-6" />
-            </button>
-          </div>
+
+          <button
+            type="button"
+            onClick={onCancel}
+            aria-label="Close product form"
+            className="text-gray-400 hover:text-gray-200 transition-colors p-1"
+          >
+            <FiX className="w-6 h-6" />
+          </button>
         </div>
 
-        {/* Form Content */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {/* Left Column */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8">
           <div className="space-y-6">
-            {/* Product Name */}
             <div>
-              <label className="block text-sm font-medium mb-2 flex items-center">
+              <label htmlFor="product-name" className="block text-sm font-medium mb-2 flex items-center">
                 <FiPackage className="w-4 h-4 mr-2 text-teal-400" />
                 Product Name *
               </label>
               <input
+                id="product-name"
                 type="text"
                 name="name"
                 value={formData.name}
                 onChange={handleChange}
+                maxLength={255}
                 className={`w-full bg-gray-800 border rounded-lg px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400 transition-all ${
-                  errors.name ? 'border-red-500' : 'border-gray-700'
+                  errors.name ? "border-red-500" : "border-gray-700"
                 }`}
                 placeholder="Enter product name"
               />
@@ -235,26 +238,26 @@ const ProductForm = ({ product, onSave, onCancel }) => {
               )}
             </div>
 
-            {/* Category */}
             <div>
-              <label className="block text-sm font-medium mb-2 flex items-center">
+              <span className="block text-sm font-medium mb-2 flex items-center">
                 <FiTag className="w-4 h-4 mr-2 text-teal-400" />
                 Category *
-              </label>
-              <div className="grid grid-cols-2 gap-2">
-                {categories.map((cat) => (
+              </span>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                {categoryOptions.map((option) => (
                   <button
-                    key={cat.value}
+                    key={option.value}
                     type="button"
-                    onClick={() => handleChange({ target: { name: 'category', value: cat.value } })}
+                    onClick={() => handleCategoryChange(option.value)}
+                    aria-pressed={formData.category === option.value}
                     className={`p-3 rounded-lg border-2 transition-all flex items-center space-x-2 ${
-                      formData.category === cat.value
-                        ? 'border-teal-400 bg-teal-400/10'
-                        : 'border-gray-700 hover:border-gray-600'
+                      formData.category === option.value
+                        ? "border-teal-400 bg-teal-400/10"
+                        : "border-gray-700 hover:border-gray-600"
                     }`}
                   >
-                    <span className="text-lg">{cat.icon}</span>
-                    <span className="text-sm font-medium">{cat.value}</span>
+                    <span className="text-lg">{option.icon}</span>
+                    <span className="text-sm font-medium">{option.value}</span>
                   </button>
                 ))}
               </div>
@@ -266,58 +269,47 @@ const ProductForm = ({ product, onSave, onCancel }) => {
               )}
             </div>
 
-            {/* Description */}
             <div>
-              <label className="block text-sm font-medium mb-2 flex items-center">
+              <label htmlFor="product-description" className="block text-sm font-medium mb-2 flex items-center">
                 <FiFileText className="w-4 h-4 mr-2 text-teal-400" />
                 Description
               </label>
               <textarea
+                id="product-description"
                 name="description"
                 value={formData.description}
                 onChange={handleChange}
-                rows="4"
+                rows="5"
                 className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400 transition-all"
                 placeholder="Describe your product..."
               />
             </div>
-
-            {/* Image Upload Placeholder */}
-            <div>
-              <label className="block text-sm font-medium mb-2 flex items-center">
-                <FiUpload className="w-4 h-4 mr-2 text-teal-400" />
-                Product Image
-              </label>
-              <div className="border-2 border-dashed border-gray-700 rounded-lg p-8 text-center hover:border-teal-400 transition-colors cursor-pointer">
-                <FiUpload className="w-8 h-8 mx-auto mb-3 text-gray-400" />
-                <p className="text-sm text-gray-400 mb-2">Click to upload product image</p>
-                <p className="text-xs text-gray-500">PNG, JPG up to 5MB</p>
-              </div>
-            </div>
           </div>
 
-          {/* Right Column */}
           <div className="space-y-6">
-            {/* Pricing Section */}
-            <div className="bg-gray-800 rounded-lg p-6">
+            <div className="bg-gray-800 rounded-lg p-5 sm:p-6">
               <h4 className="text-lg font-semibold mb-4 flex items-center">
                 <FiDollarSign className="w-5 h-5 mr-2 text-teal-400" />
                 Pricing Information
               </h4>
-              
-              <div className="grid grid-cols-2 gap-4">
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium mb-2">Cost Price *</label>
+                  <label htmlFor="product-cost-price" className="block text-sm font-medium mb-2">
+                    Cost Price *
+                  </label>
                   <div className="relative">
                     <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">$</span>
                     <input
+                      id="product-cost-price"
                       type="number"
                       name="cost_price"
                       value={formData.cost_price}
                       onChange={handleChange}
                       step="0.01"
+                      min="0"
                       className={`w-full bg-gray-700 border rounded-lg pl-8 pr-3 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400 transition-all ${
-                        errors.cost_price ? 'border-red-500' : 'border-gray-600'
+                        errors.cost_price ? "border-red-500" : "border-gray-600"
                       }`}
                       placeholder="0.00"
                     />
@@ -326,19 +318,23 @@ const ProductForm = ({ product, onSave, onCancel }) => {
                     <p className="mt-1 text-sm text-red-400">{errors.cost_price}</p>
                   )}
                 </div>
-                
+
                 <div>
-                  <label className="block text-sm font-medium mb-2">Selling Price *</label>
+                  <label htmlFor="product-selling-price" className="block text-sm font-medium mb-2">
+                    Selling Price *
+                  </label>
                   <div className="relative">
                     <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">$</span>
                     <input
+                      id="product-selling-price"
                       type="number"
                       name="selling_price"
                       value={formData.selling_price}
                       onChange={handleChange}
                       step="0.01"
+                      min="0"
                       className={`w-full bg-gray-700 border rounded-lg pl-8 pr-3 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400 transition-all ${
-                        errors.selling_price ? 'border-red-500' : 'border-gray-600'
+                        errors.selling_price ? "border-red-500" : "border-gray-600"
                       }`}
                       placeholder="0.00"
                     />
@@ -348,40 +344,48 @@ const ProductForm = ({ product, onSave, onCancel }) => {
                   )}
                 </div>
               </div>
-              
-              {/* Profit Margin Display */}
-              {formData.cost_price && formData.selling_price && (
+
+              {margin !== null && (
                 <div className="mt-4 p-3 bg-gray-700 rounded-lg">
                   <div className="flex justify-between items-center">
                     <span className="text-sm text-gray-300">Profit Margin:</span>
-                    <span className={`text-lg font-bold ${
-                      getProfitMargin() > 20 ? 'text-green-400' : 
-                      getProfitMargin() > 10 ? 'text-yellow-400' : 'text-red-400'
-                    }`}>
-                      {getProfitMargin()}%
+                    <span
+                      className={`text-lg font-bold ${
+                        margin >= 20
+                          ? "text-green-400"
+                          : margin >= 10
+                          ? "text-yellow-400"
+                          : "text-red-400"
+                      }`}
+                    >
+                      {margin.toFixed(1)}%
                     </span>
                   </div>
                 </div>
               )}
             </div>
 
-            {/* Inventory Section */}
-            <div className="bg-gray-800 rounded-lg p-6">
+            <div className="bg-gray-800 rounded-lg p-5 sm:p-6">
               <h4 className="text-lg font-semibold mb-4 flex items-center">
                 <FiBox className="w-5 h-5 mr-2 text-teal-400" />
-                Inventory & Sales
+                Inventory &amp; Sales
               </h4>
-              
-              <div className="grid grid-cols-2 gap-4">
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium mb-2">Stock Available *</label>
+                  <label htmlFor="product-stock" className="block text-sm font-medium mb-2">
+                    Stock Available *
+                  </label>
                   <input
+                    id="product-stock"
                     type="number"
                     name="stock_available"
                     value={formData.stock_available}
                     onChange={handleChange}
+                    min="0"
+                    step="1"
                     className={`w-full bg-gray-700 border rounded-lg px-3 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400 transition-all ${
-                      errors.stock_available ? 'border-red-500' : 'border-gray-600'
+                      errors.stock_available ? "border-red-500" : "border-gray-600"
                     }`}
                     placeholder="0"
                   />
@@ -389,16 +393,21 @@ const ProductForm = ({ product, onSave, onCancel }) => {
                     <p className="mt-1 text-sm text-red-400">{errors.stock_available}</p>
                   )}
                 </div>
-                
+
                 <div>
-                  <label className="block text-sm font-medium mb-2">Units Sold *</label>
+                  <label htmlFor="product-units-sold" className="block text-sm font-medium mb-2">
+                    Units Sold *
+                  </label>
                   <input
+                    id="product-units-sold"
                     type="number"
                     name="units_sold"
                     value={formData.units_sold}
                     onChange={handleChange}
+                    min="0"
+                    step="1"
                     className={`w-full bg-gray-700 border rounded-lg px-3 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400 transition-all ${
-                      errors.units_sold ? 'border-red-500' : 'border-gray-600'
+                      errors.units_sold ? "border-red-500" : "border-gray-600"
                     }`}
                     placeholder="0"
                   />
@@ -409,14 +418,13 @@ const ProductForm = ({ product, onSave, onCancel }) => {
               </div>
             </div>
 
-            {/* Rating Section */}
-            <div className="bg-gray-800 rounded-lg p-6">
+            <div className="bg-gray-800 rounded-lg p-5 sm:p-6">
               <h4 className="text-lg font-semibold mb-4 flex items-center">
                 <FiStar className="w-5 h-5 mr-2 text-teal-400" />
                 Customer Rating
               </h4>
-              
-              <div className="flex items-center space-x-4">
+
+              <div className="flex flex-wrap items-center gap-4">
                 <input
                   type="number"
                   name="customer_rating"
@@ -425,7 +433,10 @@ const ProductForm = ({ product, onSave, onCancel }) => {
                   step="0.1"
                   min="0"
                   max="5"
-                  className="w-24 bg-gray-700 border border-gray-600 rounded-lg px-3 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400 transition-all"
+                  aria-label="Customer rating out of 5"
+                  className={`w-24 bg-gray-700 border rounded-lg px-3 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400 transition-all ${
+                    errors.customer_rating ? "border-red-500" : "border-gray-600"
+                  }`}
                   placeholder="4.5"
                 />
                 <div className="flex items-center space-x-1">
@@ -434,8 +445,8 @@ const ProductForm = ({ product, onSave, onCancel }) => {
                       key={star}
                       className={`w-5 h-5 ${
                         parseFloat(formData.customer_rating) >= star
-                          ? 'text-yellow-400 fill-current'
-                          : 'text-gray-400'
+                          ? "text-yellow-400 fill-current"
+                          : "text-gray-400"
                       }`}
                     />
                   ))}
@@ -449,9 +460,8 @@ const ProductForm = ({ product, onSave, onCancel }) => {
           </div>
         </div>
 
-        {/* Error Message */}
         {errors.submit && (
-          <div className="mt-6 p-4 bg-red-900 border border-red-700 rounded-lg">
+          <div role="alert" className="mt-6 p-4 bg-red-900 border border-red-700 rounded-lg">
             <p className="text-red-200 text-sm flex items-center">
               <FiAlertCircle className="w-4 h-4 mr-2" />
               {errors.submit}
@@ -459,8 +469,7 @@ const ProductForm = ({ product, onSave, onCancel }) => {
           </div>
         )}
 
-        {/* Action Buttons */}
-        <div className="mt-8 flex justify-end space-x-4">
+        <div className="mt-8 flex flex-col-reverse sm:flex-row sm:justify-end gap-3">
           <button
             type="button"
             onClick={onCancel}
@@ -471,7 +480,7 @@ const ProductForm = ({ product, onSave, onCancel }) => {
           <button
             type="submit"
             disabled={isSubmitting}
-            className="px-6 py-3 bg-gradient-to-r from-teal-400 to-teal-600 text-black font-semibold rounded-lg hover:from-teal-500 hover:to-teal-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
+            className="px-6 py-3 bg-gradient-to-r from-teal-400 to-teal-600 text-black font-semibold rounded-lg hover:from-teal-500 hover:to-teal-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
           >
             {isSubmitting ? (
               <>

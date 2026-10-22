@@ -1,208 +1,163 @@
-import React, { createContext, useState, useEffect } from "react";
+import React, { createContext, useState, useEffect, useCallback, useRef } from "react";
 import api from "../api";
 
 export const AuthContext = createContext();
 
+const ACCESS_KEY = "access_token";
+const REFRESH_KEY = "refresh_token";
+
+// These endpoints must never trigger another token refresh attempt.
+const AUTH_ENDPOINTS = ["/users/login/", "/users/register/", "/users/token/refresh/"];
+const isAuthEndpoint = (url = "") => AUTH_ENDPOINTS.some((endpoint) => url.includes(endpoint));
+
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const refreshRequest = useRef(null);
 
-  const login = async (username, password) => {
-    try {
-      console.log("Attempting login for:", username);
-      const response = await api.post("/users/login/", { username, password });
-      
-      console.log("Login response:", response.data);
-      
-      // Handle different response formats
-      let accessToken, refreshToken, userData;
-      
-      if (response.data.success) {
-        // Custom login view format
-        accessToken = response.data.access;
-        refreshToken = response.data.refresh;
-        userData = response.data.user;
-        console.log("Using custom login view response format");
-      } else if (response.data.access) {
-        // Fallback JWT format
-        accessToken = response.data.access;
-        refreshToken = response.data.refresh;
-        console.log("Using fallback JWT response format");
-      } else {
-        throw new Error("No access token received");
-      }
-      
-      if (accessToken && refreshToken) {
-        localStorage.setItem("access_token", accessToken);
-        localStorage.setItem("refresh_token", refreshToken);
-        api.defaults.headers["Authorization"] = `Bearer ${accessToken}`;
-        
-        // Set user data
-        if (userData) {
-          setUser(userData);
-        } else {
-          // Fallback: get user details from /me endpoint
-          try {
-            const userResponse = await api.get("/users/me/");
-            const user = userResponse.data.success ? userResponse.data.data : userResponse.data;
-            setUser(user);
-          } catch (userError) {
-            console.error("Failed to get user details:", userError);
-            // Create basic user object from login data
-            setUser({
-              username: username,
-              role: 'user' // Default role
-            });
-          }
-        }
-        
-        console.log("Login successful for:", username);
-        return response.data;
-      } else {
-        throw new Error("Missing tokens in response");
-      }
-    } catch (error) {
-      console.error("Login error:", error);
-      throw error;
-    }
-  };
-
-  const register = async (username, email, password, role) => {
-    try {
-      console.log("Attempting registration:", { username, email, role });
-      
-      const response = await api.post("/users/register/", {
-        username,
-        email,
-        password,
-        role
-      });
-      
-      console.log("Registration successful:", response.data);
-      return response.data;
-    } catch (error) {
-      console.error("Registration error:", error);
-      
-      // Log detailed error information
-      if (error.response) {
-        console.error("Error response:", error.response.data);
-        console.error("Error status:", error.response.status);
-      } else if (error.request) {
-        console.error("Network error:", error.request);
-      } else {
-        console.error("Other error:", error.message);
-      }
-      
-      throw error;
-    }
-  };
-
-  const logout = () => {
-    console.log("Logging out user");
-    localStorage.removeItem("access_token");
-    localStorage.removeItem("refresh_token");
-    delete api.defaults.headers["Authorization"];
+  const logout = useCallback(() => {
+    localStorage.removeItem(ACCESS_KEY);
+    localStorage.removeItem(REFRESH_KEY);
     setUser(null);
-  };
-
-  const refreshToken = async () => {
-    try {
-      const refresh = localStorage.getItem("refresh_token");
-      if (!refresh) {
-        throw new Error("No refresh token");
-      }
-      
-      console.log("Attempting token refresh...");
-      const response = await api.post("/users/token/refresh/", {
-        refresh: refresh
-      });
-      
-      const newAccessToken = response.data.access;
-      localStorage.setItem("access_token", newAccessToken);
-      api.defaults.headers["Authorization"] = `Bearer ${newAccessToken}`;
-      
-      console.log("Token refresh successful");
-      return newAccessToken;
-    } catch (error) {
-      console.error("Token refresh failed:", error);
-      logout();
-      throw error;
-    }
-  };
-
-  useEffect(() => {
-    const loadUser = async () => {
-      const token = localStorage.getItem("access_token");
-      if (token) {
-        api.defaults.headers["Authorization"] = `Bearer ${token}`;
-        try {
-          const userData = await api.get("/users/me/");
-          // Handle both old and new response formats
-          const user = userData.data.success ? userData.data.data : userData.data;
-          setUser(user);
-          console.log("User loaded:", user.username);
-        } catch (error) {
-          console.error("Failed to load user:", error);
-          if (error.response?.status === 401) {
-            // Token expired, try to refresh
-            try {
-              await refreshToken();
-              const userData = await api.get("/users/me/");
-              const user = userData.data.success ? userData.data.data : userData.data;
-              setUser(user);
-            } catch (refreshError) {
-              console.error("Token refresh failed:", refreshError);
-              logout();
-            }
-          } else {
-            logout();
-          }
-        }
-      }
-      setLoading(false);
-    };
-    
-    loadUser();
   }, []);
 
-  // Add token refresh interceptor
+  const refreshAccessToken = useCallback(async () => {
+    const refresh = localStorage.getItem(REFRESH_KEY);
+    if (!refresh) {
+      throw new Error("No refresh token available");
+    }
+
+    // Reuse an in-flight request so several simultaneous 401s only refresh once.
+    if (!refreshRequest.current) {
+      refreshRequest.current = api
+        .post("/users/token/refresh/", { refresh })
+        .then(({ data }) => {
+          if (!data.access) {
+            throw new Error("No access token returned");
+          }
+          localStorage.setItem(ACCESS_KEY, data.access);
+          return data.access;
+        })
+        .finally(() => {
+          refreshRequest.current = null;
+        });
+    }
+
+    return refreshRequest.current;
+  }, []);
+
+  const login = useCallback(async (username, password) => {
+    const { data } = await api.post("/users/login/", { username, password });
+    const access = data.access || data.access_token;
+    const refresh = data.refresh || data.refresh_token;
+
+    if (!access || !refresh) {
+      throw new Error("The server returned an invalid login response.");
+    }
+
+    localStorage.setItem(ACCESS_KEY, access);
+    localStorage.setItem(REFRESH_KEY, refresh);
+
+    let userData = data.user;
+    if (!userData) {
+      const response = await api.get("/users/me/");
+      userData = response.data.success ? response.data.data : response.data;
+    }
+
+    setUser(userData);
+    return userData;
+  }, []);
+
+  const register = useCallback(async (username, email, password, role) => {
+    const { data } = await api.post("/users/register/", {
+      username,
+      email,
+      password,
+      role,
+    });
+    return data;
+  }, []);
+
+  // Retry once with a fresh access token when a request returns 401.
   useEffect(() => {
     const interceptor = api.interceptors.response.use(
       (response) => response,
       async (error) => {
-        const originalRequest = error.config;
-        
-        if (error.response?.status === 401 && !originalRequest._retry) {
-          originalRequest._retry = true;
-          
-          try {
-            const newToken = await refreshToken();
-            originalRequest.headers["Authorization"] = `Bearer ${newToken}`;
-            return api(originalRequest);
-          } catch (refreshError) {
-            logout();
-            return Promise.reject(refreshError);
-          }
+        const originalRequest = error.config || {};
+        const shouldRefresh =
+          error.response?.status === 401 &&
+          !originalRequest._retry &&
+          !isAuthEndpoint(originalRequest.url);
+
+        if (!shouldRefresh) {
+          return Promise.reject(error);
         }
-        
-        return Promise.reject(error);
+
+        originalRequest._retry = true;
+
+        try {
+          const token = await refreshAccessToken();
+          originalRequest.headers = {
+            ...(originalRequest.headers || {}),
+            Authorization: `Bearer ${token}`,
+          };
+          return api(originalRequest);
+        } catch (refreshError) {
+          logout();
+          return Promise.reject(refreshError);
+        }
       }
     );
 
     return () => {
       api.interceptors.response.eject(interceptor);
     };
-  }, []);
+  }, [logout, refreshAccessToken]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const loadUser = async () => {
+      if (!localStorage.getItem(ACCESS_KEY)) {
+        setLoading(false);
+        return;
+      }
+
+      try {
+        const { data } = await api.get("/users/me/");
+        if (!cancelled) {
+          setUser(data.success ? data.data : data);
+        }
+      } catch (error) {
+        // Do not invent a user when the session cannot be restored.
+        if (!cancelled) {
+          logout();
+        }
+      } finally {
+        if (!cancelled) {
+          setLoading(false);
+        }
+      }
+    };
+
+    loadUser();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [logout]);
 
   return (
-    <AuthContext.Provider value={{ 
-      user, 
-      login, 
-      register, 
-      logout, 
-      loading,
-      isAuthenticated: !!user 
-    }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        login,
+        register,
+        logout,
+        loading,
+        isAuthenticated: Boolean(user),
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );

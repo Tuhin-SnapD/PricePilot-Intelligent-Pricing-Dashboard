@@ -1,8 +1,9 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route, Link, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
 import PrivateRoute from './components/common/PrivateRoute';
 import ErrorBoundary from './components/common/ErrorBoundary';
+import Navbar from './components/common/Navbar';
 import Login from './components/auth/Login';
 import Register from './components/auth/Register';
 import ProductList from './components/products/ProductList';
@@ -15,6 +16,7 @@ import './App.css';
 function Home() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-black via-gray-900 to-gray-800 text-white">
+      <Navbar />
       {/* Hero Section */}
       <div className="relative overflow-hidden">
         {/* Background Pattern */}
@@ -174,14 +176,14 @@ function Home() {
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
                 <Link
                   to="/products"
-                  className="inline-flex items-center justify-center px-8 py-3 bg-gradient-to-r from-teal-400 to-teal-600 text-white font-semibold rounded-lg hover:from-teal-500 hover:to-teal-700 transition-all duration-300 transform hover:scale-105"
+                  className="inline-flex items-center justify-center px-8 py-3 bg-gradient-to-r from-teal-400 to-teal-600 text-black font-semibold rounded-lg hover:from-teal-500 hover:to-teal-700 transition-all duration-300 transform hover:scale-105"
                 >
                   <FaRocket className="mr-2" />
                   Get Started Now
                 </Link>
                 <Link
                   to="/analytics"
-                  className="inline-flex items-center justify-center px-8 py-3 border border-teal-400 text-teal-400 font-semibold rounded-lg hover:bg-teal-400 hover:text-white transition-all duration-300"
+                  className="inline-flex items-center justify-center px-8 py-3 border border-teal-400 text-teal-400 font-semibold rounded-lg hover:bg-teal-400 hover:text-black transition-all duration-300"
                 >
                   View Demo
                 </Link>
@@ -227,14 +229,6 @@ function App() {
               element={
                 <PrivateRoute>
                   <ProductList />
-                </PrivateRoute>
-              }
-            />
-            <Route
-              path="/forecast"
-              element={
-                <PrivateRoute>
-                  <Navigate to="/products" replace />
                 </PrivateRoute>
               }
             />

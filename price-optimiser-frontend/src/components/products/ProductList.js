@@ -1,6 +1,6 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useCallback, useContext, useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { HiArrowLeft } from "react-icons/hi2";
-import { FiX } from "react-icons/fi";
 import { FaPlus, FaChartLine } from "react-icons/fa";
 import api from "../../api";
 import Navbar from "../common/Navbar";
@@ -8,12 +8,15 @@ import ProductTable from "./ProductTable";
 import ProductForm from "./ProductForm";
 import SearchFilter from "./SearchFilter";
 import DemandForecastChartModal from "../forecasts/DemandForecast";
+import { AuthContext } from "../../contexts/AuthContext";
 
 export default function ProductList() {
+  const { user } = useContext(AuthContext);
+  const navigate = useNavigate();
+
   const [allProducts, setAllProducts] = useState([]);
-  const [products, setProducts] = useState([]);
+  const [forecastMap, setForecastMap] = useState({});
   const [editingProduct, setEditingProduct] = useState(null);
-  const [viewProduct, setViewProduct] = useState(null);
   const [showForm, setShowForm] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const [showForecast, setShowForecast] = useState(true);
@@ -23,80 +26,111 @@ export default function ProductList() {
   const [showModal, setShowModal] = useState(false);
   const [loading, setLoading] = useState(true);
 
-  const loadProducts = useCallback(async () => {
-    try {
-      setLoading(true);
-      const { data: response } = await api.get("/products/");
-      let prods = response.success ? response.data : response;
+  const canManage = Boolean(user) && user.role !== "buyer";
 
-      if (showForecast && prods.length) {
-        try {
-          const { data: forecastResponse } = await api.get("/products/forecast/");
-          const forecastsArray = forecastResponse.success ? forecastResponse.data : forecastResponse;
-          const forecastsMap = forecastsArray.reduce(
-            (map, { product_id, forecast }) => {
-              map[product_id] = forecast;
-              return map;
-            },
-            {}
-          );
-          prods = prods.map((p) => ({
-            ...p,
-            demand_forecast: forecastsMap[p.id] ?? 0,
-          }));
-        } catch (error) {
-          console.error("Forecast loading error:", error);
-          prods = prods.map((p) => ({ ...p, demand_forecast: 0 }));
-        }
-      } else {
-        prods = prods.map((p) => ({ ...p, demand_forecast: 0 }));
+  const loadProducts = useCallback(async () => {
+    setLoading(true);
+    try {
+      const [productsResult, forecastResult] = await Promise.allSettled([
+        api.get("/products/"),
+        api.get("/products/forecast/"),
+      ]);
+
+      if (productsResult.status !== "fulfilled") {
+        throw productsResult.reason;
       }
 
-      setAllProducts(prods);
+      const response = productsResult.value.data;
+      const products = response.success ? response.data : response;
+      const nextProducts = Array.isArray(products) ? products : [];
+
+      const nextForecastMap = {};
+      if (forecastResult.status === "fulfilled") {
+        const forecastResponse = forecastResult.value.data;
+        const forecasts = forecastResponse.success ? forecastResponse.data : forecastResponse;
+        if (Array.isArray(forecasts)) {
+          forecasts.forEach(({ product_id, forecast }) => {
+            nextForecastMap[product_id] = Number(forecast) || 0;
+          });
+        }
+      }
+
+      setAllProducts(nextProducts);
+      setForecastMap(nextForecastMap);
       setErrorMessage("");
     } catch (err) {
-      console.error("Error loading products:", err);
       setAllProducts([]);
+      setForecastMap({});
       setErrorMessage(
         err.response?.status === 403
-          ? "🚫 Buyers cannot manage products."
-          : "❌ Error fetching products."
+          ? "You do not have permission to view products."
+          : "Unable to load products. Please try again."
       );
     } finally {
       setLoading(false);
     }
-  }, [showForecast]);
+  }, []);
 
   useEffect(() => {
     loadProducts();
   }, [loadProducts]);
 
-  useEffect(() => {
-    setProducts(
-      allProducts.filter((p) => {
-        const byName = searchText
-          ? p.name.toLowerCase().includes(searchText.toLowerCase())
-          : true;
-        const byCat = category ? p.category === category : true;
-        return byName && byCat;
-      })
-    );
-  }, [allProducts, searchText, category]);
+  const products = useMemo(
+    () =>
+      allProducts
+        .filter((product) => {
+          const matchesName = searchText
+            ? product.name.toLowerCase().includes(searchText.toLowerCase())
+            : true;
+          const matchesCategory = category ? product.category === category : true;
+          return matchesName && matchesCategory;
+        })
+        .map((product) => ({
+          ...product,
+          forecast: forecastMap[product.id] ?? null,
+        })),
+    [allProducts, forecastMap, searchText, category]
+  );
 
-  const handleFilter = ({ name, category }) => {
+  const categories = useMemo(
+    () => Array.from(new Set(allProducts.map((product) => product.category))).sort(),
+    [allProducts]
+  );
+
+  const handleFilter = useCallback(({ name, category: nextCategory }) => {
     setSearchText(name);
-    setCategory(category);
-  };
+    setCategory(nextCategory);
+  }, []);
 
   const handleDelete = async (id) => {
+    const product = allProducts.find((item) => item.id === id);
+    const confirmed = window.confirm(
+      `Delete "${product?.name || "this product"}"? This action cannot be undone.`
+    );
+    if (!confirmed) return;
+
     try {
       await api.delete(`/products/${id}/`);
+      setSelectedIds((previous) => previous.filter((selectedId) => selectedId !== id));
       await loadProducts();
-      setSelectedIds((prev) => prev.filter((sid) => sid !== id));
     } catch (error) {
-      console.error("Delete error:", error);
-      setErrorMessage("Failed to delete product. Please try again.");
+      setErrorMessage(
+        error.response?.status === 403
+          ? "You do not have permission to delete this product."
+          : "Failed to delete the product. Please try again."
+      );
     }
+  };
+
+  const openCreateForm = () => {
+    setEditingProduct(null);
+    setShowForm(true);
+  };
+
+  const openEditForm = (product) => {
+    if (!canManage) return;
+    setEditingProduct(product);
+    setShowForm(true);
   };
 
   if (loading) {
@@ -118,136 +152,118 @@ export default function ProductList() {
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-b from-black to-gray-800 text-white">
       <Navbar />
-      <div className="mx-4 mt-4 mb-2 bg-gray-900 rounded-lg px-4 py-3 flex items-center">
-        <div className="flex items-center space-x-3">
+
+      <div className="mx-4 mt-4 mb-3 bg-gray-900 rounded-xl px-4 py-3 flex flex-wrap items-center gap-3 border border-gray-800">
+        <div className="flex items-center space-x-3 shrink-0">
           <button
-            onClick={() => window.history.back()}
-            className="flex items-center text-gray-300 hover:text-white transition-colors"
+            type="button"
+            onClick={() => navigate("/")}
+            aria-label="Back to dashboard"
+            className="flex items-center text-gray-300 hover:text-white transition-colors p-1 rounded-lg hover:bg-gray-800"
           >
             <HiArrowLeft className="w-5 h-5" />
           </button>
-          <span className="text-base font-semibold">
-            Create and Manage Products
-          </span>
+          <span className="text-base font-semibold">Create and Manage Products</span>
         </div>
-        <div className="flex-1 flex justify-center items-center space-x-6">
-          <label className="relative inline-flex items-center cursor-pointer">
+
+        <div className="flex flex-1 flex-wrap items-center justify-center gap-3 min-w-[240px]">
+          <label className="relative inline-flex items-center cursor-pointer select-none">
             <input
               type="checkbox"
               className="sr-only peer"
               checked={showForecast}
-              onChange={() => setShowForecast((v) => !v)}
+              onChange={() => setShowForecast((value) => !value)}
             />
             <div className="w-11 h-6 bg-gray-700 rounded-full peer-focus:ring-2 peer-focus:ring-teal-400 peer-checked:bg-teal-500 transition-colors" />
             <div className="absolute left-0.5 top-0.5 bg-white w-5 h-5 rounded-full peer-checked:translate-x-5 transition-transform" />
             <span className="ml-3 text-sm">With Demand Forecast</span>
           </label>
-          <div className="w-1/3">
-            <SearchFilter onSearch={handleFilter} />
+
+          <div className="w-full sm:w-auto sm:min-w-[320px]">
+            <SearchFilter onSearch={handleFilter} categories={categories} />
           </div>
         </div>
-        <div className="flex items-center space-x-3">
+
+        <div className="flex items-center space-x-3 ml-auto">
+          {canManage && (
+            <button
+              type="button"
+              onClick={openCreateForm}
+              className="bg-teal-400 hover:bg-teal-500 text-black text-sm rounded-lg px-3 py-2 flex items-center space-x-1 transition-colors"
+            >
+              <FaPlus className="w-3 h-3" />
+              <span>Add New</span>
+            </button>
+          )}
           <button
-            onClick={() => {
-              setEditingProduct(null);
-              setShowForm(true);
-            }}
-            className="bg-teal-400 hover:bg-teal-500 text-black text-sm rounded px-3 py-1 flex items-center space-x-1 transition-colors"
-          >
-            <FaPlus className="w-3 h-3" />
-            <span>Add New</span>
-          </button>
-          <button
+            type="button"
             onClick={() => setShowModal(true)}
-            className="bg-teal-400 hover:bg-teal-500 text-black text-sm rounded px-3 py-1 flex items-center space-x-1 transition-colors"
+            className="bg-teal-400 hover:bg-teal-500 text-black text-sm rounded-lg px-3 py-2 flex items-center space-x-1 transition-colors"
           >
             <FaChartLine className="w-3 h-3" />
             <span>Forecast</span>
           </button>
         </div>
       </div>
-      
+
       {errorMessage && (
-        <div className="mx-4 mb-4 bg-red-900 border border-red-700 text-red-200 p-3 rounded-lg">
+        <div role="alert" className="mx-4 mb-4 bg-red-900 border border-red-700 text-red-200 p-3 rounded-lg">
           <p className="text-sm">{errorMessage}</p>
         </div>
       )}
-      
+
       {showForm && (
         <div className="mx-4 mb-4">
           <ProductForm
             product={editingProduct}
+            categories={categories}
             onSave={() => {
               setShowForm(false);
+              setEditingProduct(null);
               loadProducts();
             }}
-            onCancel={() => setShowForm(false)}
+            onCancel={() => {
+              setShowForm(false);
+              setEditingProduct(null);
+            }}
           />
         </div>
       )}
-      
-      {viewProduct && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-60 px-4">
-          <div className="relative w-full max-w-md bg-gray-900 text-white rounded-lg p-6">
-            <button
-              type="button"
-              onClick={() => setViewProduct(null)}
-              className="absolute top-4 right-4 text-gray-400 hover:text-gray-200"
-            >
-              <FiX className="w-6 h-6" />
-            </button>
-            <h3 className="text-xl font-semibold mb-4">Product Details</h3>
-            <div className="space-y-2">
-              <p>
-                <strong>Demand Forecast:</strong>{" "}
-                {viewProduct.demand_forecast.toLocaleString()}
-              </p>
-            </div>
-          </div>
-        </div>
-      )}
-      
-      <div className="flex-1 overflow-auto px-4 pb-20">
+
+      <div className="flex-1 px-4 pb-6">
         {products.length === 0 ? (
           <div className="text-center py-12">
             <p className="text-gray-400 text-lg">No products found matching your criteria.</p>
+            {(searchText || category) && (
+              <p className="text-gray-500 text-sm mt-2">
+                Try clearing the search text or category filter.
+              </p>
+            )}
           </div>
         ) : (
-          <ProductTable
-            products={products}
-            selectedIds={selectedIds}
-            onSelectionChange={setSelectedIds}
-            onView={(prod) => setViewProduct(prod)}
-            onEdit={(prod) => {
-              setEditingProduct(prod);
-              setShowForm(true);
-            }}
-            onDelete={handleDelete}
-            showForecast={showForecast}
-          />
+          <>
+            <ProductTable
+              products={products}
+              selectedIds={selectedIds}
+              onSelectionChange={setSelectedIds}
+              onEdit={openEditForm}
+              onDelete={handleDelete}
+              showForecast={showForecast}
+            />
+            <div className="mt-4 flex items-center justify-between text-sm text-gray-400">
+              <span>
+                Showing {products.length} of {allProducts.length} products
+              </span>
+              {selectedIds.length > 0 && (
+                <span className="text-teal-400 font-medium">
+                  {selectedIds.length} selected
+                </span>
+              )}
+            </div>
+          </>
         )}
       </div>
-      
-      <div className="fixed bottom-0 left-0 w-full bg-gray-900 px-4 py-3 flex justify-between items-center">
-        <div className="text-sm text-gray-400">
-          Showing {products.length} of {allProducts.length} products
-        </div>
-        <div className="flex space-x-2">
-          <button
-            onClick={() => window.history.back()}
-            className="bg-gray-700 hover:bg-gray-600 text-white text-sm rounded px-3 py-1 transition-colors"
-          >
-            Cancel
-          </button>
-          <button
-            onClick={() => window.history.back()}
-            className="bg-teal-400 hover:bg-teal-500 text-black text-sm rounded px-3 py-1 transition-colors"
-          >
-            Save
-          </button>
-        </div>
-      </div>
-      
+
       {showModal && (
         <DemandForecastChartModal
           selectedIds={selectedIds}

@@ -1,7 +1,7 @@
 // src/components/forecasts/DemandForecast.js
 import React, { useEffect, useState } from "react";
-import ReactDOM from "react-dom";
-import { FiX, FiTrendingUp, FiTrendingDown, FiTarget, FiInfo } from "react-icons/fi";
+import { createPortal } from "react-dom";
+import { FiX, FiTrendingUp, FiTrendingDown, FiTarget } from "react-icons/fi";
 import { FaBrain, FaChartLine } from "react-icons/fa";
 import api from "../../api";
 import { Line, Bar } from "react-chartjs-2";
@@ -35,6 +35,7 @@ export default function DemandForecastChartModal({ selectedIds = [], onClose = (
   const [methodComparisonData, setMethodComparisonData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [advancedError, setAdvancedError] = useState(null);
   const [viewMode, setViewMode] = useState('basic'); // 'basic' or 'advanced'
 
   useEffect(() => {
@@ -47,28 +48,51 @@ export default function DemandForecastChartModal({ selectedIds = [], onClose = (
       try {
         setLoading(true);
         setError(null);
-        
-        console.log("Fetching forecast data for selected IDs:", selectedIds);
-        
-        // Get basic forecast data
-        const forecastResponse = await api.get("/products/forecast/");
-        const forecastsArray = forecastResponse.data.success ? forecastResponse.data.data : forecastResponse.data;
-        
-        // Get advanced forecast data
-        const advancedResponse = await api.get("/products/advanced-forecast/");
-        const advancedData = advancedResponse.data.success ? advancedResponse.data.data : advancedResponse.data;
-        
+        setAdvancedError(null);
+
+        // A failed advanced forecast must not hide the basic forecast.
+        const [forecastResult, advancedResult] = await Promise.allSettled([
+          api.get("/products/forecast/"),
+          api.get("/products/advanced-forecast/"),
+        ]);
+
+        if (forecastResult.status !== "fulfilled") {
+          throw forecastResult.reason;
+        }
+
+        const forecastResponse = forecastResult.value;
+        const basicPayload = forecastResponse.data.success
+          ? forecastResponse.data.data
+          : forecastResponse.data;
+        const forecastsArray = Array.isArray(basicPayload) ? basicPayload : [];
+
+        let advancedData = [];
+        if (advancedResult.status === "fulfilled") {
+          const advancedResponse = advancedResult.value;
+          const advancedPayload = advancedResponse.data.success
+            ? advancedResponse.data.data
+            : advancedResponse.data;
+
+          if (Array.isArray(advancedPayload)) {
+            advancedData = advancedPayload;
+          } else {
+            setAdvancedError("Advanced analysis data is unavailable.");
+          }
+        } else {
+          setAdvancedError("Advanced analysis could not be loaded.");
+        }
+
         // Filter for selected products and ensure data structure
         const filteredBasic = forecastsArray
           .filter(f => selectedIds.includes(f.product_id))
           .map(f => ({
             product_id: f.product_id,
             name: f.name,
-            stock_available: parseInt(f.stock_available) || 0,
-            units_sold: parseInt(f.units_sold) || 0,
-            forecast: parseInt(f.forecast) || 0
+            stock_available: parseInt(f.stock_available, 10) || 0,
+            units_sold: parseInt(f.units_sold, 10) || 0,
+            forecast: parseInt(f.forecast, 10) || 0
           }));
-        
+
         const filteredAdvanced = advancedData
           .filter(f => selectedIds.includes(f.product_id))
           .map(f => ({
@@ -110,8 +134,8 @@ export default function DemandForecastChartModal({ selectedIds = [], onClose = (
             {
               label: "Demand Forecast",
               data: filteredBasic.map((d) => d.forecast),
-              borderColor: "#10b981",
-              backgroundColor: "rgba(16, 185, 129, 0.1)",
+              borderColor: "#14b8a6",
+              backgroundColor: "rgba(20, 184, 166, 0.1)",
               borderWidth: 3,
               tension: 0.2,
               fill: false,
@@ -154,8 +178,8 @@ export default function DemandForecastChartModal({ selectedIds = [], onClose = (
               {
                 label: "Exponential Smoothing",
                 data: filteredAdvanced.map(d => d.forecast_methods.exponential_smoothing.forecast),
-                backgroundColor: "rgba(16, 185, 129, 0.8)",
-                borderColor: "#10b981",
+                backgroundColor: "rgba(20, 184, 166, 0.8)",
+                borderColor: "#14b8a6",
                 borderWidth: 1,
               },
               {
@@ -217,13 +241,15 @@ export default function DemandForecastChartModal({ selectedIds = [], onClose = (
             </div>
             <h2 className="text-xl font-semibold text-white">
               Advanced Demand Forecast Analysis
-          </h2>
+            </h2>
             <span className="text-sm text-gray-400">({selectedIds.length} products selected)</span>
           </div>
           <div className="flex items-center space-x-4">
             <div className="flex space-x-2">
               <button
+                type="button"
                 onClick={() => setViewMode('basic')}
+                aria-pressed={viewMode === 'basic'}
                 className={`px-3 py-1 rounded text-sm font-medium transition-colors ${
                   viewMode === 'basic'
                     ? 'bg-teal-500 text-black'
@@ -233,7 +259,9 @@ export default function DemandForecastChartModal({ selectedIds = [], onClose = (
                 Basic View
               </button>
               <button
+                type="button"
                 onClick={() => setViewMode('advanced')}
+                aria-pressed={viewMode === 'advanced'}
                 className={`px-3 py-1 rounded text-sm font-medium transition-colors ${
                   viewMode === 'advanced'
                     ? 'bg-teal-500 text-black'
@@ -243,11 +271,14 @@ export default function DemandForecastChartModal({ selectedIds = [], onClose = (
                 Advanced Analysis
               </button>
             </div>
-            <FiX
-              size={24}
-            onClick={onClose}
-            className="text-red-500 hover:text-red-600 cursor-pointer"
-          />
+            <button
+              type="button"
+              onClick={onClose}
+              aria-label="Close forecast analysis"
+              className="text-gray-400 hover:text-red-400 transition-colors p-1 rounded-lg hover:bg-gray-700"
+            >
+              <FiX size={24} />
+            </button>
           </div>
         </div>
 
@@ -273,6 +304,15 @@ export default function DemandForecastChartModal({ selectedIds = [], onClose = (
             </div>
           ) : (
             <div className="p-6 space-y-6">
+              {advancedError && (
+                <div
+                  role="status"
+                  className="bg-yellow-900 border border-yellow-700 text-yellow-100 rounded-lg p-3 text-sm"
+                >
+                  {advancedError} The basic forecast is still available.
+                </div>
+              )}
+
               {/* Chart Section */}
               <div className="bg-gray-800 rounded-lg p-6">
                 <h3 className="text-lg font-medium text-white mb-4 flex items-center">
@@ -489,15 +529,16 @@ export default function DemandForecastChartModal({ selectedIds = [], onClose = (
   );
 
   if (!selectedIds.length) {
-    return ReactDOM.createPortal(
-      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40 backdrop-blur-sm">
-        <div className="p-8 text-center text-gray-300 bg-gray-900 rounded-xl shadow-lg">
+    return createPortal(
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40 backdrop-blur-sm px-4">
+        <div className="p-8 text-center text-gray-300 bg-gray-900 rounded-xl shadow-lg max-w-md">
           <div className="flex items-center justify-center w-16 h-16 bg-gradient-to-br from-teal-400 to-teal-600 rounded-xl mx-auto mb-4">
             <FaChartLine className="text-white text-2xl" />
           </div>
           <p className="mb-4 text-lg font-medium">No products selected for forecast.</p>
           <p className="text-sm text-gray-400 mb-6">Please select one or more products to view their demand forecast analysis.</p>
           <button
+            type="button"
             onClick={onClose}
             className="px-6 py-2 bg-teal-500 text-black rounded-lg hover:bg-teal-600 transition-colors"
           >
@@ -509,5 +550,5 @@ export default function DemandForecastChartModal({ selectedIds = [], onClose = (
     );
   }
 
-  return ReactDOM.createPortal(modalContent, document.body);
+  return createPortal(modalContent, document.body);
 }

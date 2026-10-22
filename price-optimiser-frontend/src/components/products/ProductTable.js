@@ -1,12 +1,8 @@
 import React, { useState, useContext } from "react";
 import { FiEye, FiEdit, FiTrash2, FiTrendingUp, FiTrendingDown, FiMinus, FiPackage, FiStar, FiDollarSign } from "react-icons/fi";
-import { FaSort, FaCheck, FaTimes, FaExclamationTriangle } from "react-icons/fa";
+import { FaSort, FaTimes } from "react-icons/fa";
 import { AuthContext } from "../../contexts/AuthContext";
-
-export const formatPrice = (val) => {
-  const num = typeof val === "number" ? val : parseFloat(val) || 0;
-  return `$${num.toFixed(2)}`;
-};
+import { formatCurrency } from "../../utils/format";
 
 const ProductTable = ({
   products,
@@ -19,10 +15,15 @@ const ProductTable = ({
   const { user } = useContext(AuthContext);
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [sortConfig, setSortConfig] = useState({ key: null, direction: 'asc' });
-  const [hoveredRow, setHoveredRow] = useState(null);
 
-  const showColumns = user.role !== "buyer";
+  const showColumns = Boolean(user) && user.role !== "buyer";
   const allSelected = products.length > 0 && selectedIds.length === products.length;
+  const selectedSelling = selectedProduct ? parseFloat(selectedProduct.selling_price) : NaN;
+  const selectedCost = selectedProduct ? parseFloat(selectedProduct.cost_price) : NaN;
+  const selectedMargin =
+    Number.isFinite(selectedSelling) && selectedSelling > 0 && Number.isFinite(selectedCost)
+      ? (((selectedSelling - selectedCost) / selectedSelling) * 100).toFixed(1)
+      : null;
 
   const handleSort = (key) => {
     let direction = 'asc';
@@ -73,7 +74,6 @@ const ProductTable = ({
   // Status indicator component
   const StatusIndicator = ({ product }) => {
     const stock = parseInt(product.stock_available) || 0;
-    const sold = parseInt(product.units_sold) || 0;
     
     if (stock === 0) {
       return (
@@ -101,9 +101,13 @@ const ProductTable = ({
 
   // Performance indicator component
   const PerformanceIndicator = ({ product }) => {
-    const sold = parseInt(product.units_sold) || 0;
-    const forecast = parseInt(product.demand_forecast) || 0;
-    
+    const sold = parseInt(product.units_sold, 10) || 0;
+    const forecast = Number(product.forecast);
+
+    if (!Number.isFinite(forecast) || forecast <= 0) {
+      return <span className="text-xs text-gray-400">—</span>;
+    }
+
     if (sold > forecast * 1.2) {
       return (
         <div className="flex items-center space-x-1 text-green-600">
@@ -138,6 +142,7 @@ const ProductTable = ({
                 <th className="p-4 border-r border-gray-700">
                   <input
                     type="checkbox"
+                    aria-label="Select all products"
                     className="h-4 w-4 text-teal-400 bg-gray-700 rounded focus:ring-teal-400"
                     checked={allSelected}
                     onChange={toggleSelectAll}
@@ -205,7 +210,7 @@ const ProductTable = ({
               {showForecast && (
                 <th 
                   className="p-4 border-r border-gray-700 cursor-pointer hover:bg-gray-700 transition-colors"
-                  onClick={() => handleSort('demand_forecast')}
+                  onClick={() => handleSort('forecast')}
                 >
                   <div className="flex items-center space-x-2">
                     <span>Forecast</span>
@@ -223,16 +228,19 @@ const ProductTable = ({
               return (
                 <tr
                   key={prod.id}
-                  className={`odd:bg-gray-50 even:bg-white hover:bg-gray-100 transition-all duration-200 ${
-                    isSelected ? "bg-teal-50 border-l-4 border-teal-400" : ""
-                  } ${hoveredRow === prod.id ? "shadow-md transform scale-[1.01]" : ""}`}
-                  onMouseEnter={() => setHoveredRow(prod.id)}
-                  onMouseLeave={() => setHoveredRow(null)}
+                  className={`${
+                    isSelected
+                      ? "bg-teal-50 border-l-4 border-teal-400"
+                      : idx % 2 === 0
+                      ? "bg-gray-50"
+                      : "bg-white"
+                  } hover:bg-gray-100 transition-colors`}
                 >
                   {showColumns && (
                     <td className="p-4 border-r border-gray-300">
                       <input
                         type="checkbox"
+                        aria-label={`Select ${prod.name}`}
                         className="h-4 w-4 text-teal-400 bg-white rounded focus:ring-teal-400"
                         checked={isSelected}
                         onChange={() => toggleSelectOne(prod.id)}
@@ -264,21 +272,28 @@ const ProductTable = ({
                     <td className="p-4 border-r border-gray-300">
                       <div className="flex items-center space-x-1">
                         <FiDollarSign className="w-3 h-3 text-gray-500" />
-                        <span className="font-medium">{formatPrice(prod.cost_price)}</span>
+                        <span className="font-medium">{formatCurrency(prod.cost_price)}</span>
                       </div>
                     </td>
                   )}
                   <td className="p-4 border-r border-gray-300">
                     <div className="flex items-center space-x-1">
                       <FiDollarSign className="w-3 h-3 text-green-500" />
-                      <span className="font-semibold text-green-600">{formatPrice(prod.selling_price)}</span>
+                      <span className="font-semibold text-green-600">{formatCurrency(prod.selling_price)}</span>
                     </div>
                   </td>
                   <td className="p-4 border-r border-gray-300">
-                    <div className="flex items-center justify-between">
-                      <span className="font-medium">{prod.stock_available}</span>
-                      <StatusIndicator product={prod} />
-                    </div>
+                    <span
+                      className={`font-medium ${
+                        Number(prod.stock_available) === 0
+                          ? "text-red-600"
+                          : Number(prod.stock_available) < 10
+                          ? "text-yellow-600"
+                          : ""
+                      }`}
+                    >
+                      {prod.stock_available}
+                    </span>
                   </td>
                   {showColumns && (
                     <td className="p-4 border-r border-gray-300">
@@ -291,9 +306,13 @@ const ProductTable = ({
                   {showForecast && (
                     <td className="p-4 border-r border-gray-300">
                       <div className="flex items-center space-x-2">
-                        <span className="font-medium">{prod.demand_forecast}</span>
+                        <span className="font-medium">
+                          {prod.forecast != null ? Number(prod.forecast).toLocaleString() : "—"}
+                        </span>
                         <button
+                          type="button"
                           onClick={() => setSelectedProduct(prod)}
+                          aria-label={`View forecast details for ${prod.name}`}
                           className="text-teal-600 hover:text-teal-800 transition-colors"
                           title="View forecast details"
                         >
@@ -309,21 +328,27 @@ const ProductTable = ({
                     <td className="p-4">
                       <div className="flex items-center space-x-2">
                         <button
+                          type="button"
                           onClick={() => setSelectedProduct(prod)}
+                          aria-label={`View details for ${prod.name}`}
                           title="View Details"
                           className="p-2 text-gray-600 hover:text-teal-600 hover:bg-teal-50 rounded-lg transition-all"
                         >
                           <FiEye className="w-4 h-4" />
                         </button>
                         <button
+                          type="button"
                           onClick={() => onEdit(prod)}
+                          aria-label={`Edit ${prod.name}`}
                           title="Edit"
                           className="p-2 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all"
                         >
                           <FiEdit className="w-4 h-4" />
                         </button>
                         <button
+                          type="button"
                           onClick={() => onDelete(prod.id)}
+                          aria-label={`Delete ${prod.name}`}
                           title="Delete"
                           className="p-2 text-gray-600 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
                         >
@@ -358,6 +383,7 @@ const ProductTable = ({
               <button
                 type="button"
                 onClick={() => setSelectedProduct(null)}
+                aria-label="Close product details"
                 className="text-gray-400 hover:text-gray-200 p-2 rounded-lg hover:bg-gray-800 transition-colors"
               >
                 <FaTimes className="w-6 h-6" />
@@ -398,18 +424,18 @@ const ProductTable = ({
                   {showColumns && (
                     <div className="flex justify-between">
                       <span className="text-gray-400">Cost Price:</span>
-                      <span className="text-white font-medium">{formatPrice(selectedProduct.cost_price)}</span>
+                      <span className="text-white font-medium">{formatCurrency(selectedProduct.cost_price)}</span>
                     </div>
                   )}
                   <div className="flex justify-between">
                     <span className="text-gray-400">Selling Price:</span>
-                    <span className="text-green-400 font-semibold">{formatPrice(selectedProduct.selling_price)}</span>
+                    <span className="text-green-400 font-semibold">{formatCurrency(selectedProduct.selling_price)}</span>
                   </div>
                   {showColumns && (
                     <div className="flex justify-between">
                       <span className="text-gray-400">Profit Margin:</span>
                       <span className="text-teal-400 font-medium">
-                        {((parseFloat(selectedProduct.selling_price) - parseFloat(selectedProduct.cost_price)) / parseFloat(selectedProduct.selling_price) * 100).toFixed(1)}%
+                        {selectedMargin !== null ? `${selectedMargin}%` : "—"}
                       </span>
                     </div>
                   )}
@@ -444,7 +470,11 @@ const ProductTable = ({
                   <div className="space-y-3">
                     <div className="flex justify-between">
                       <span className="text-gray-400">Forecast:</span>
-                      <span className="text-white font-medium">{selectedProduct.demand_forecast}</span>
+                      <span className="text-white font-medium">
+                        {selectedProduct.forecast != null
+                          ? Number(selectedProduct.forecast).toLocaleString()
+                          : "—"}
+                      </span>
                     </div>
                     <div>
                       <span className="text-gray-400 block mb-2">Performance:</span>
