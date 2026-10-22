@@ -36,4 +36,4 @@ class Command(BaseCommand):
                         'optimized_price': row.get('demand_forecast_value', 0)
                     }
                 )
-        self.stdout.write(self.style.SUCCESS('✅ Product data imported successfully.'))
+        self.stdout.write(self.style.SUCCESS('Product data imported successfully.'))

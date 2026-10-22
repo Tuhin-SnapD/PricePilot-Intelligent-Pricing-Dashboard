@@ -28,7 +28,7 @@ ChartJS.register(
   Legend
 );
 
-export default function DemandForecastChartModal({ selectedIds, onClose }) {
+export default function DemandForecastChartModal({ selectedIds = [], onClose = () => {} }) {
   const [forecastData, setForecastData] = useState([]);
   const [advancedForecastData, setAdvancedForecastData] = useState([]);
   const [chartData, setChartData] = useState(null);

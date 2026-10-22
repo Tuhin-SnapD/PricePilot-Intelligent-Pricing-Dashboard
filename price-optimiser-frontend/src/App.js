@@ -1,12 +1,11 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Link, Navigate } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
 import PrivateRoute from './components/common/PrivateRoute';
 import ErrorBoundary from './components/common/ErrorBoundary';
 import Login from './components/auth/Login';
 import Register from './components/auth/Register';
 import ProductList from './components/products/ProductList';
-import DemandForecast from './components/forecasts/DemandForecast';
 import PricingOptimization from './components/optimization/PricingOptimization';
 import AnalyticsDashboard from './components/analytics/AnalyticsDashboard';
 import { FiPackage, FiTrendingUp, FiBarChart2, FiArrowRight, FiZap, FiTarget, FiShield } from 'react-icons/fi';
@@ -235,7 +234,7 @@ function App() {
               path="/forecast"
               element={
                 <PrivateRoute>
-                  <DemandForecast />
+                  <Navigate to="/products" replace />
                 </PrivateRoute>
               }
             />
